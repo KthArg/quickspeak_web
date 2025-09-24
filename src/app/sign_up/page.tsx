@@ -71,7 +71,7 @@ const DarkModeSignUp: NextPage = () => {
   return (
     <div className="w-full min-h-screen relative bg-[#232323] overflow-hidden text-white font-cabin flex items-center justify-center p-4 sm:p-6">
       {/* Fondo con desenfoque morado AÑADIDO DE VUELTA */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y w-[900px] h-[900px] md:w-[1400px] md:h-[1400px] rounded-full bg-[rgba(124,1,246,0.4)] [filter:blur(600px)] md:[filter:blur(300px)]"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 bg-[rgba(124,1,246,0.4)] w-full h-full rounded-full [filter:blur(600px)]"></div>
       
       <form
         onSubmit={handleSubmit}
