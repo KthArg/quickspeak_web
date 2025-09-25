@@ -3,115 +3,90 @@
 import type { NextPage } from 'next';
 import { useState } from 'react';
 import Image from 'next/image';
+import { useTheme } from '../contexts/ThemeContext';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
-// --- CSS para la animación del botón (igual que antes) ---
+// --- CSS para la animación del botón ---
 const animationStyles = `
-  @keyframes fade-in-up {
-    0% {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  .animate-fade-in-up {
-    animation: fade-in-up 0.5s ease-out forwards;
-  }
+  @keyframes fade-in-up { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+  .animate-fade-in-up { animation: fade-in-up 0.5s ease-out forwards; }
 `;
 
-// Mismos datos de idiomas
+// --- DATOS DE IDIOMAS ---
 const languages = [
-  { name: 'English', src: 'https://unpkg.com/circle-flags/flags/gb.svg' },
-  { name: 'Español', src: 'https://unpkg.com/circle-flags/flags/cr.svg' },
-  { name: '漢語', src: 'https://unpkg.com/circle-flags/flags/cn.svg' },
-  { name: 'Hindi', src: 'https://unpkg.com/circle-flags/flags/in.svg' },
-  { name: 'Русский', src: 'https://unpkg.com/circle-flags/flags/ru.svg' },
-  { name: 'Français', src: 'https://unpkg.com/circle-flags/flags/fr.svg' },
-  { name: 'العربية', src: 'https://unpkg.com/circle-flags/flags/ae.svg' },
-  { name: 'Português', src: 'https://unpkg.com/circle-flags/flags/br.svg' },
-  { name: 'Deutsch', src: 'https://unpkg.com/circle-flags/flags/de.svg' },
-  { name: 'Italian', src: 'https://unpkg.com/circle-flags/flags/it.svg' },
+  { id: 1, name: 'Italian', flagUrl: 'https://unpkg.com/circle-flags/flags/it.svg' },
+  { id: 2, name: 'Español', flagUrl: 'https://unpkg.com/circle-flags/flags/cr.svg' },
+  { id: 3, name: '漢語', flagUrl: 'https://unpkg.com/circle-flags/flags/cn.svg' },
+  { id: 4, name: 'Hindi', flagUrl: 'https://unpkg.com/circle-flags/flags/in.svg' },
+  { id: 5, name: 'Русский', flagUrl: 'https://unpkg.com/circle-flags/flags/ru.svg' },
+  { id: 6, name: 'Français', flagUrl: 'https://unpkg.com/circle-flags/flags/fr.svg' },
+  { id: 7, name: 'العربية', flagUrl: 'https://unpkg.com/circle-flags/flags/ae.svg' },
+  { id: 8, name: 'Português', flagUrl: 'https://unpkg.com/circle-flags/flags/br.svg' },
+  { id: 9, name: 'Deutsch', flagUrl: 'https://unpkg.com/circle-flags/flags/de.svg' },
 ];
 
-const DarkModePickLanguagesToLearn: NextPage = () => {
-  // --- CAMBIO PRINCIPAL: El estado ahora es un array de strings ---
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+const PickLanguagesToLearnPage: NextPage = () => {
+  const { theme } = useTheme();
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]); // Pre-selección de ejemplo
 
-  // --- Lógica para AÑADIR o QUITAR un idioma de la selección ---
   const handleToggleLanguage = (languageName: string) => {
-    setSelectedLanguages((prevSelected) => {
-      // Si el idioma ya está seleccionado, lo quitamos (deselección)
-      if (prevSelected.includes(languageName)) {
-        return prevSelected.filter((lang) => lang !== languageName);
-      }
-      // Si no está seleccionado, lo añadimos
-      return [...prevSelected, languageName];
-    });
+    setSelectedLanguages((prev) => 
+      prev.includes(languageName) ? prev.filter((lang) => lang !== languageName) : [...prev, languageName]
+    );
   };
 
   const handleContinue = () => {
-    if (selectedLanguages.length > 0) {
-      alert(`Continuing with: ${selectedLanguages.join(', ')}`);
-      // Lógica para navegar a la siguiente página
-    }
+    alert(`Continuing with: ${selectedLanguages.join(', ')}`);
   };
 
   return (
-    <div className="w-full min-h-screen relative bg-[#232323] overflow-hidden text-white font-cabin flex flex-col items-center justify-center p-4 sm:p-6">
+    <div className={`w-full min-h-screen relative font-cabin flex flex-col items-center justify-center p-4 sm:p-6 transition-colors
+        ${theme === 'dark' 
+            ? 'bg-gradient-to-b from-[#232323] to-[#2c006e] text-white' 
+            : 'bg-gradient-to-b from-white to-red-100 text-black'}`
+    }>
       <style>{animationStyles}</style>
 
-      {/* --- CAMBIO DE COLOR: El difuminado ahora es ROJO --- */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 bg-[#EF476FA3] w-full h-full rounded-full [filter:blur(500px)]"></div>
+      {/* Brillo de fondo dinámico */}
+      <div className={`absolute bottom-0 left-0 w-full h-3/4
+        ${theme === 'dark' 
+            ? 'bg-gradient-to-t from-red-500/30 via-transparent to-transparent [filter:blur(100px)]' 
+            : 'bg-gradient-to-t from-red-300/40 via-transparent to-transparent [filter:blur(100px)]'}`
+      }></div>
       
-      <ArrowLeft className="absolute top-6 left-6 md:top-10 md:left-14 w-9 h-9 md:w-11 md:h-11 text-white cursor-pointer z-20" />
+      <ArrowLeft className={`absolute top-6 left-6 md:top-10 md:left-14 w-9 h-9 md:w-11 md:h-11 cursor-pointer z-20 ${theme === 'dark' ? 'text-white' : 'text-gray-600'}`} />
 
       <main className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-10 md:gap-12 py-10">
-        <div className="w-full flex flex-col items-center text-center gap-2">
-          {/* --- CAMBIO DE TEXTO: Nuevo título y subtítulo --- */}
-          <h1 className="text-4xl md:text-5xl font-semibold">
-            Languages to learn
-          </h1>
-          <p className="text-lg md:text-xl text-gray-300">
-            Which languages do you want to start with?
-          </p>
-        </div>
+        <header className="w-full flex flex-col items-start text-left gap-2 px-4">
+          <h1 className="text-4xl md:text-5xl font-bold">Pick Languages To Learn</h1>
+          <p className={`text-lg md:text-xl ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Which languages do you want to start with?</p>
+        </header>
 
-        <div className="w-full max-w-xl grid grid-cols-3 gap-x-4 gap-y-8 md:gap-y-12 md:gap-x-70">
+        <div className="w-full grid grid-cols-3 gap-x-4 gap-y-8 md:gap-y-12">
           {languages.map((lang) => (
             <button
-              key={lang.name}
+              key={lang.id}
               onClick={() => handleToggleLanguage(lang.name)}
               className="flex flex-col items-center gap-3 text-center transition-transform hover:scale-105 focus:outline-none group"
             >
-              <div
-                // --- CAMBIO DE LÓGICA: Comprueba si el idioma está INCLUIDO en el array ---
-                className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 group-hover:shadow-lg
-                  ${selectedLanguages.includes(lang.name) ? 'ring-4 ring-cyan-400' : 'ring-2 ring-transparent'}`}
-              >
-                <Image
-                  src={lang.src}
-                  alt={`Flag of ${lang.name}`}
-                  width={20}
-                  height={20}
-                  className="rounded-full w-full h-full object-cover"
-                />
+              <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center">
+                <Image src={lang.flagUrl} alt={`Flag of ${lang.name}`} width={112} height={112} className="rounded-full w-full h-full object-cover shadow-lg" />
+                {/* Indicador de selección */}
+                {selectedLanguages.includes(lang.name) && (
+                    <div className="absolute inset-0 rounded-full border-4 border-teal-400 bg-black/30"></div>
+                )}
               </div>
-              <span className="font-medium text-gray-200 text-lg">
-                {lang.name}
-              </span>
+              <span className={`font-medium text-lg ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>{lang.name}</span>
             </button>
           ))}
         </div>
 
         <div className="h-20 pt-4">
-          {/* --- CAMBIO DE LÓGICA: El botón aparece si hay al menos UN idioma seleccionado --- */}
           {selectedLanguages.length > 0 && (
             <button
               onClick={handleContinue}
-              className="animate-fade-in-up bg-[#18D2B4] text-[#073b4c] font-extrabold text-xl rounded-full py-3 px-10 flex items-center gap-2.5 hover:bg-[#14a892] transition-colors"
+              className={`animate-fade-in-up font-extrabold text-xl rounded-full py-3 px-10 flex items-center gap-2.5 transition-colors
+                ${theme === 'dark' ? 'bg-[#18D2B4] text-[#073b4c] hover:bg-[#14a892]' : 'bg-teal-400 text-white hover:bg-teal-500'}`}
             >
               <span>Continue</span>
               <ArrowRight className="w-6 h-6" />
@@ -123,4 +98,4 @@ const DarkModePickLanguagesToLearn: NextPage = () => {
   );
 };
 
-export default DarkModePickLanguagesToLearn;
+export default PickLanguagesToLearnPage;

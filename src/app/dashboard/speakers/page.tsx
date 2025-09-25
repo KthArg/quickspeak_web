@@ -3,6 +3,7 @@
 import type { NextPage } from 'next';
 import { useCallback, useState } from 'react';
 import Image from 'next/image';
+import { useTheme } from '@/app/contexts/ThemeContext';
 import { Plus, PlusCircle, MessageSquare, Bookmark, RotateCw } from 'lucide-react';
 
 // --- DATOS FICTICIOS (sin cambios) ---
@@ -21,7 +22,7 @@ const mockRecentChats = [
     { id: 5, name: 'Alex', lastMessage: 'Okay, sounds good!', timestamp: 'Today', unread: false, colorClass: 'from-indigo-500 to-purple-600', avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=Alex', flagUrl: 'https://unpkg.com/circle-flags/flags/mx.svg' },
 ];
 
-// --- SUB-COMPONENTE (sin cambios) ---
+// --- SUB-COMPONENTE ---
 const ChatListItem = ({ name, lastMessage, timestamp, unread, colorClass, avatarUrl, flagUrl }: typeof mockRecentChats[0]) => (
   <button className={`w-full flex items-center p-2 sm:p-3 rounded-2xl shadow-lg bg-gradient-to-r ${colorClass} transition-transform hover:scale-[1.02]`}>
     <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex-shrink-0">
@@ -29,7 +30,7 @@ const ChatListItem = ({ name, lastMessage, timestamp, unread, colorClass, avatar
       <Image src={avatarUrl} alt={`Avatar of ${name}`} layout="fill" className="rounded-full" unoptimized={true} />
     </div>
     <div className="flex-grow flex flex-col items-start ml-3 sm:ml-4 text-left">
-      <span className="font-bold text-md sm:text-lg">{name}</span>
+      <span className="font-bold text-md sm:text-lg text-white">{name}</span>
       <span className="text-white/80 text-sm sm:text-md truncate max-w-[120px] sm:max-w-xs">{lastMessage}</span>
     </div>
     <div className="flex flex-col items-end gap-2 text-right ml-auto pl-2">
@@ -41,6 +42,7 @@ const ChatListItem = ({ name, lastMessage, timestamp, unread, colorClass, avatar
 
 
 const SpeakersPageV2: NextPage = () => {
+  const { theme } = useTheme();
   const [savedSpeakers, setSavedSpeakers] = useState(savedSpeakersData);
   const [recentChats, setRecentChats] = useState(mockRecentChats);
 
@@ -48,68 +50,60 @@ const SpeakersPageV2: NextPage = () => {
   const onAddSpeakerClick = useCallback(() => alert("Add a new speaker!"), []);
 
   return (
-    <div className="w-full min-h-screen relative bg-gradient-to-b from-[#232323] to-[#2c006e] text-white font-cabin flex flex-col overflow-x-hidden">
-
-      {/* CAMBIO 1: Convertimos <main> en un grid y quitamos el padding. */}
-      {/* El padding se define ahora en las columnas del grid. */}
-      {/* grid-cols-[1fr,min(1280px,100%),1fr] -> Columna central de máximo 1280px (o el ancho de la pantalla), con las laterales flexibles */}
-      {/* La versión para este layout es: col-izq, col-central, col-der */}
-      {/* minmax(1.5rem, 1fr) -> La col. lateral tiene MÍNIMO 1.5rem (24px, como p-6), y crece si hay espacio. */}
-      {/* minmax(0, 1280px) -> La col. central se encoge hasta 0 y tiene un MÁXIMO de 1280px. */}
+    <div className={`w-full min-h-screen relative font-cabin flex flex-col overflow-x-hidden transition-colors
+        ${theme === 'dark' 
+            ? 'bg-gradient-to-b from-[#232323] to-[#2c006e] text-white' 
+            : 'bg-gradient-to-b from-white to-purple-200 text-black'}`
+    }>
       <main className="relative z-10 grid grid-cols-[minmax(1.5rem,1fr)_minmax(0,1280px)_minmax(1.5rem,1fr)] md:grid-cols-[minmax(2.5rem,1fr)_minmax(0,1280px)_minmax(2.5rem,1fr)] w-full flex-grow pt-6 md:pt-10 pb-32">
         
-        {/* CAMBIO 2: Hacemos que CADA sección hija del grid ocupe solo la columna central (col-start-2) */}
-        {/* Así mantenemos el layout original sin usar padding. */}
         <header className="flex flex-col items-start gap-6 col-start-2">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-cyan-400">
+          <h1 className={`text-4xl sm:text-5xl md:text-6xl font-bold ${theme === 'dark' ? 'text-cyan-400' : 'text-cyan-500'}`}>
             Speakers
           </h1>
           <button
             onClick={onSpeakerCatalogClick}
-            className="flex items-center justify-between gap-3 w-full sm:w-auto bg-cyan-500 rounded-full pl-4 pr-2 py-2 sm:pl-6 sm:pr-3 sm:py-2.5 shadow-lg transition-transform hover:scale-105"
+            className={`flex items-center justify-between gap-3 w-full sm:w-auto rounded-full pl-4 pr-2 py-2 sm:pl-6 sm:pr-3 sm:py-2.5 shadow-lg transition-transform hover:scale-105
+                ${theme === 'dark' ? 'bg-cyan-500' : 'bg-cyan-400'}`}
           >
-            <span className="text-md sm:text-lg font-bold">Speaker Catalog</span>
+            <span className={`text-md sm:text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-black'}`}>Speaker Catalog</span>
             <div className="bg-white rounded-full p-0.5">
-              <PlusCircle size={28} className="text-cyan-500" />
+              <PlusCircle size={28} className={`${theme === 'dark' ? 'text-cyan-500' : 'text-cyan-400'}`} />
             </div>
           </button>
         </header>
 
-        <section className="flex flex-col items-start gap-4 mt-8 col-span-full col-start-2">
-        {/* El título necesita su propio padding para alinearse con el resto. */}
-        <div className="">
-            <button className="bg-cyan-500/90 rounded-full px-5 py-2 text-md font-bold shadow flex items-center gap-2">
-            Your Saved Speakers
-            <div className="w-3 h-3 rounded-full bg-cyan-200 border-2 border-cyan-800"></div>
+        <section className="flex flex-col items-start gap-4 mt-8 col-start-2">
+            <button className={`rounded-full px-5 py-2 text-md font-bold shadow flex items-center gap-2
+                ${theme === 'dark' ? 'bg-cyan-500/90 text-white' : 'bg-cyan-400 text-black'}`}>
+                Your Saved Speakers
+                <div className={`w-3 h-3 rounded-full ${theme === 'dark' ? 'bg-cyan-200 border-2 border-cyan-800' : 'bg-cyan-600 border-2 border-cyan-900'}`}></div>
             </button>
-        </div>
-        
-        {/* El contenedor de scroll ahora funciona correctamente porque su padre (`<section>`) es realmente de ancho completo. */}
-        <div className="w-full overflow-x-auto snap-x snap-mandatory scrollbar-hide">
-            {/* El padding interno sigue siendo necesario para el espacio visual y el punto de snap. */}
-            <div className="flex items-start gap-4 pt-2">
-            {savedSpeakers.map((speaker) => (
-                <div key={speaker.name} className="flex flex-col items-center gap-2 w-24 sm:w-28 flex-shrink-0 snap-start">
-                <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full cursor-pointer transition-transform hover:scale-105">
-                    <Image src={speaker.flagUrl} alt={`${speaker.name}'s flag`} layout="fill" className="rounded-full object-cover" />
-                    <Image src={speaker.avatarUrl} alt={`${speaker.name}'s avatar`} layout="fill" className="rounded-full" unoptimized={true} />
+            <div className="w-full overflow-x-auto pb-4 -mb-4">
+                <div className="flex items-start gap-4 pt-2 w-max">
+                    {savedSpeakers.map((speaker) => (
+                        <div key={speaker.name} className="flex flex-col items-center gap-2 w-24 sm:w-28 flex-shrink-0">
+                            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full cursor-pointer transition-transform hover:scale-105">
+                                <Image src={speaker.flagUrl} alt={`${speaker.name}'s flag`} layout="fill" className="rounded-full object-cover" />
+                                <Image src={speaker.avatarUrl} alt={`${speaker.name}'s avatar`} layout="fill" className="rounded-full" unoptimized={true} />
+                            </div>
+                            <span className={`text-md sm:text-lg font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>{speaker.name}</span>
+                        </div>
+                    ))}
+                    <div className="flex flex-col items-center gap-2 w-24 sm:w-28 flex-shrink-0">
+                        <button onClick={onAddSpeakerClick} className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center transition-colors
+                            ${theme === 'dark' ? 'bg-gray-800/60 hover:bg-gray-700/80' : 'bg-gray-200 hover:bg-gray-300'}`}>
+                            <Plus size={40} className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} />
+                        </button>
+                        <span className={`text-md sm:text-lg font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Add</span>
+                    </div>
                 </div>
-                <span className="text-md sm:text-lg font-semibold text-gray-200 text-center">{speaker.name}</span>
-                </div>
-            ))}
-            <div className="flex flex-col items-center gap-2 w-24 sm:w-28 flex-shrink-0 snap-start">
-                <button onClick={onAddSpeakerClick} className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gray-800/60 flex items-center justify-center transition-colors hover:bg-gray-700/80">
-                <Plus size={40} className="text-gray-400" />
-                </button>
-                <span className="text-md sm:text-lg font-semibold text-gray-300">Add</span>
             </div>
-            </div>
-        </div>
         </section>
 
-        <section className="flex flex-col items-start gap-4 mt-8 col-start-2">
+        <section className="flex flex-col items-start gap-4 mt-8 col-start-2 w-full">
           <div className="flex items-center gap-2 bg-red-500 rounded-full px-4 py-1.5 shadow-lg">
-            <span className="text-md font-bold">Recents</span>
+            <span className="text-md font-bold text-white">Recents</span>
             <RotateCw size={16} className="text-white/80" />
           </div>
 
@@ -122,15 +116,16 @@ const SpeakersPageV2: NextPage = () => {
           ) : (
             <button 
               onClick={onAddSpeakerClick}
-              className="w-full max-w-md p-0.5 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl shadow-lg hover:shadow-purple-500/50 transition-shadow"
+              className={`w-full max-w-md p-0.5 rounded-2xl shadow-lg transition-shadow
+                ${theme === 'dark' ? 'bg-gradient-to-br from-purple-500 to-pink-500 hover:shadow-purple-500/50' : 'bg-gradient-to-br from-purple-400 to-pink-400 hover:shadow-purple-400/50'}`}
             >
-              <div className="bg-[#31115e] rounded-[14px] flex items-center gap-4 sm:gap-5 p-3 sm:p-4">
-                <div className="bg-purple-600 rounded-full p-2 sm:p-3 shadow-md">
-                  <Plus className="w-7 h-7 sm:w-8 sm:h-8" />
+              <div className={`rounded-[14px] flex items-center gap-4 sm:gap-5 p-3 sm:p-4 ${theme === 'dark' ? 'bg-[#31115e]' : 'bg-purple-100'}`}>
+                <div className={`rounded-full p-2 sm:p-3 shadow-md ${theme === 'dark' ? 'bg-purple-600' : 'bg-purple-500'}`}>
+                  <Plus className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
                 </div>
                 <div className="text-left">
-                  <p className="text-lg sm:text-xl font-bold">Add a Speaker</p>
-                  <p className="text-gray-300 text-sm sm:text-base">Tap here to pick a personality</p>
+                  <p className={`text-lg sm:text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-purple-900'}`}>Add a Speaker</p>
+                  <p className={`text-sm sm:text-base ${theme === 'dark' ? 'text-gray-300' : 'text-purple-800'}`}>Tap here to pick a personality</p>
                 </div>
               </div>
             </button>
@@ -139,13 +134,9 @@ const SpeakersPageV2: NextPage = () => {
       </main>
 
       <footer className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50">
-        <div className="bg-cyan-400 rounded-full flex items-center justify-center gap-12 sm:gap-16 py-3 px-8 sm:py-4 sm:px-12 shadow-2xl">
-            <button className="text-black hover:scale-110 transition-transform">
-                <MessageSquare strokeWidth={2.5} className="w-7 h-7 sm:w-8 sm:h-8"/>
-            </button>
-            <button className="text-black hover:scale-110 transition-transform">
-                <Bookmark strokeWidth={2.5} className="w-7 h-7 sm:w-8 sm:h-8"/>
-            </button>
+        <div className={`rounded-full flex items-center justify-center gap-12 sm:gap-16 py-3 px-8 sm:py-4 sm:px-12 shadow-2xl ${theme === 'dark' ? 'bg-cyan-400' : 'bg-cyan-400'}`}>
+            <button className="text-black hover:scale-110 transition-transform"><MessageSquare strokeWidth={2.5} className="w-7 h-7 sm:w-8 sm:h-8"/></button>
+            <button className="text-black hover:scale-110 transition-transform"><Bookmark strokeWidth={2.5} className="w-7 h-7 sm:w-8 sm:h-8"/></button>
         </div>
       </footer>
     </div>

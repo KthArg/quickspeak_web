@@ -1,180 +1,123 @@
-"use client"; // Directiva para componente de cliente
+"use client";
 
 import type { NextPage } from 'next';
-import { useState } from 'react';
+import Image from 'next/image';
+import { useTheme } from './contexts/ThemeContext';
 import { ArrowRight } from 'lucide-react';
-import { FcGoogle } from 'react-icons/fc';
-import { FaMicrosoft } from 'react-icons/fa';
-import { RiVoiceprintFill } from 'react-icons/ri';
+import React from 'react';
 
-const DarkModeSignUp: NextPage = () => {
-  // Estado para manejar los valores de los campos del formulario
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
+// --- DATOS PARA LAS TARJETAS DE PERSONALIDAD ---
+const personalities = [
+    { name: 'Aurora', language: 'Spanish', color: 'bg-red-500', avatarSeed: 'Aurora' },
+    { name: 'Beatrix', language: 'German', color: 'bg-teal-400', avatarSeed: 'Beatrix' },
+    { name: 'Bernard', language: 'French', color: 'bg-sky-500', avatarSeed: 'Bernard' },
+    { name: 'Vanessa', language: 'Portuguese', color: 'bg-purple-500', avatarSeed: 'Vanessa' },
+    { name: 'Gaston', language: 'French', color: 'bg-emerald-500', avatarSeed: 'Gaston' },
+    { name: 'Rahjeet', language: 'Hindi', color: 'bg-yellow-500', avatarSeed: 'Rahjeet' },
+    { name: 'Ferdinand', language: 'German', color: 'bg-amber-500', avatarSeed: 'Ferdinand' },
+    { name: 'Isabelle', language: 'French', color: 'bg-violet-500', avatarSeed: 'Isabelle' },
+    { name: 'Liam', language: 'Irish', color: 'bg-lime-500', avatarSeed: 'Liam' },
+    { name: 'Mei', language: 'Chinese', color: 'bg-rose-500', avatarSeed: 'Mei' },
+];
 
-  // Estado para manejar los errores de validación
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+// --- CSS PARA LA ANIMACIÓN DEL GRID ---
+const animationStyles = `
+  @keyframes scroll-x {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); } /* Solo se mueve en el eje X */
+  }
+  .animate-scroll-x {
+    animation: scroll-x 60s linear infinite;
+  }
+`;
 
-  // Manejador para actualizar el estado cuando el usuario escribe
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
-
-  // Función para validar el formulario
-  const validateForm = () => {
-    const newErrors: { [key: string]: string } = {};
-
-    // Validación de Email
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email address is invalid';
-    }
-
-    // Validación de Contraseña
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-        newErrors.password = 'Password must be at least 8 characters long';
-    }
-
-    // Validación de Confirmar Contraseña
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-    
-    setErrors(newErrors);
-    // Devuelve true si no hay errores, de lo contrario false
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // Manejador para el envío del formulario
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (validateForm()) {
-      // Si la validación es exitosa, puedes enviar los datos
-      console.log('Form submitted successfully:', formData);
-      alert('Sign Up Successful!');
-    } else {
-      console.log('Form validation failed:', errors);
-    }
-  };
-
-
-  return (
-    <div className="w-full min-h-screen relative bg-[#232323] overflow-hidden text-white font-cabin flex items-center justify-center p-4 sm:p-6">
-      {/* Fondo con desenfoque morado AÑADIDO DE VUELTA */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y w-[900px] h-[900px] md:w-[1400px] md:h-[1400px] rounded-full bg-[rgba(124,1,246,0.4)] [filter:blur(600px)] md:[filter:blur(300px)]"></div>
-      
-      <form
-        onSubmit={handleSubmit}
-        noValidate
-        className="relative z-10 w-full max-w-sm flex flex-col items-start gap-5"
-      >
-        {/* Encabezado */}
-        <div className="w-full flex flex-col items-center justify-center gap-5 mb-3 text-4xl">
-          <div className="rounded-full bg-white flex w-full items-center justify-center py-3 px-8 gap-3">
-            <RiVoiceprintFill size={36} className="text-[#073b4c]" />
-            <b className="relative text-2xl md:text-3xl text-[#073b4c]">QuickSpeak</b>
-          </div>
-          <div className="self-start text-3xl text-white font-bold">
-            <h1 className="relative">Sign Up</h1>
-          </div>
+// --- SUB-COMPONENTE: Tarjeta de Personalidad ---
+const PersonalityCard = ({ p }: { p: typeof personalities[0] }) => (
+    <div className={`w-64 h-72 rounded-3xl ${p.color} p-4 pb-0 flex flex-col justify-between shadow-2xl`}>
+        <div className="text-white text-center">
+            <h3 className="text-2xl font-bold">{p.name}</h3>
+            <p className="flex items-center justify-center gap-1.5 font-semibold text-white/80 text-center">
+                {p.language} 
+                <span className="w-4 h-4 rounded-full bg-black/20 text-xs flex items-center justify-center">🇪🇸</span>
+            </p>
         </div>
-
-        {/* Campos del formulario */}
-        <div className="w-full flex flex-col items-start gap-4 text-black">
-          {/* Email */}
-          <div className="w-full flex flex-col items-start gap-2.5">
-            <label className="rounded-full bg-white text-sm text-[#073b4c] font-bold flex items-center justify-center py-1.5 px-5">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="FulanitoDeTal@example.com"
-              className="w-full rounded-full bg-white border-2 border-solid border-gray-400 p-4 text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+        <div className="relative self-center w-40 h-40">
+            <Image 
+                src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${p.avatarSeed}`}
+                alt={`Avatar of ${p.name}`}
+                layout="fill"
+                unoptimized
             />
-             {errors.email && <p className="text-red-500 font-bold ml-4 text-sm">{errors.email}</p>}
-          </div>
-          {/* Password */}
-          <div className="w-full flex flex-col items-start gap-2.5">
-            <label className="rounded-full bg-white text-sm text-[#073b4c] font-bold flex items-center justify-center py-1.5 px-5">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="********"
-              className="w-full rounded-full bg-white border-2 border-solid border-gray-400 p-4 text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-            />
-            {errors.password && <p className="text-red-500 font-bold ml-4 text-sm">{errors.password}</p>}
-          </div>
-          {/* Confirm Password */}
-          <div className="w-full flex flex-col items-start gap-2.5">
-            <label className="rounded-full bg-white text-sm text-[#073b4c] font-bold flex items-center justify-center py-1.5 px-5">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              placeholder="********"
-              className="w-full rounded-full bg-white border-2 border-solid border-gray-400 p-4 text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-            />
-            {errors.confirmPassword && <p className="text-red-500 font-bold ml-4 text-sm">{errors.confirmPassword}</p>}
-          </div>
         </div>
+    </div>
+);
 
-        {/* Botón de Sign Up y link de Log In */}
-        <div className="w-full flex flex-col items-center justify-center gap-3 text-lg mt-3">
-          <button type="submit" className="w-full rounded-full bg-[#18D2B4] flex items-center justify-center py-3 px-5 gap-2.5 hover:bg-[#14a892] transition-colors text-[#073b4c] font-extrabold text-xl">
-            <b>Sign Up</b>
-            <ArrowRight className="w-6 h-6" />
-          </button>
-          <div className="text-center text-base text-gray-300">
-            <b>
-              Already a member?{' '}
-              <a href="#" className="underline cursor-pointer text-[#18D2B4] hover:text-white">
-                Log In
-              </a>
-            </b>
-          </div>
-        </div>
-
-        {/* Separador y botones de redes sociales */}
-        <div className="w-full flex flex-col items-start gap-4">
-          <div className="w-full flex items-center gap-4">
-            <div className="flex-1 rounded-full bg-gray-400 h-0.5"></div>
-            <div className="text-gray-300 text-sm">
-              <b>Or Sign Up With</b>
+// --- SUB-COMPONENTE: Grid Animado ---
+const AnimatedGrid = () => (
+    // Se eliminó la rotación y se ajustó el layout a Flexbox para un movimiento horizontal
+    <div className="absolute top-0 left-0 flex space-x-6 - animate-scroll-x">
+        {/* Se duplica el contenido para crear el bucle infinito */}
+        {[...personalities, ...personalities].map((p, index) => (
+            <div key={`${p.name}-1-${index}`} className="flex flex-col space-y-6">
+                <PersonalityCard p={p} />
+                <PersonalityCard p={personalities[(index + 4) % personalities.length]} />
+                <PersonalityCard p={personalities[(index + 8) % personalities.length]} />
+                <PersonalityCard p={personalities[(index + 12) % personalities.length]} />
+                <PersonalityCard p={personalities[(index + 16) % personalities.length]} />
             </div>
-            <div className="flex-1 rounded-full bg-gray-400 h-0.5"></div>
-          </div>
-          <div className="w-full flex flex-col sm:flex-row justify-center items-center gap-4">
-             <button type="button" className="w-full sm:w-auto flex-1 h-16 bg-white rounded-full flex justify-center items-center hover:bg-gray-200 transition-colors ring-4 ring-offset-2 ring-offset-transparent ring-[#3498db]">
-              <FcGoogle size={32} />
-            </button>
-            <button type="button" className="w-full sm:w-auto flex-1 h-16 bg-white rounded-full flex justify-center items-center hover:bg-gray-200 transition-colors ring-4 ring-offset-2 ring-offset-transparent ring-[#e74c3c]">
-              <FaMicrosoft size={28} color="#00A4EF" />
-            </button>
-          </div>
+        ))}
+    </div>
+);
+
+
+// --- SUB-COMPONENTE: Contenido Principal (Hero) ---
+const HeroContent = () => {
+    const { theme } = useTheme();
+    const isDark = theme === 'dark';
+    return (
+        <div className="relative z-10 w-full h-full flex flex-col justify-end items-start p-6 sm:p-12 md:p-20 text-left">
+            <div className="max-w-xl flex flex-col items-start gap-6">
+                <h1 className={`text-6xl sm:text-7xl md:text-8xl font-bold leading-tight ${isDark ? 'text-white' : 'text-black'}`}>
+                    Speak with<br/>Endless<br/>Personalities
+                </h1>
+                <p className={`text-xl sm:text-2xl ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Learn languages for fun
+                </p>
+                <div className="flex flex-col items-start gap-3 mt-4">
+                    <button className="flex items-center gap-3 px-8 py-4 bg-red-500 text-white rounded-2xl font-bold text-2xl shadow-lg transition-transform hover:scale-105">
+                        <span>Sign Up for Free</span>
+                        <ArrowRight size={28} />
+                    </button>
+                    <p className={`text-lg ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                        Already a member? <a href="#" className={`underline ${isDark ? 'hover:text-white' : 'hover:text-black'}`}>Log In</a>
+                    </p>
+                </div>
+            </div>
         </div>
-      </form>
+    );
+};
+
+const LandingPage: NextPage = () => {
+  const { theme } = useTheme();
+  return (
+    <div className={`w-full h-screen relative font-cabin flex flex-col overflow-hidden transition-colors
+        ${theme === 'dark' ? 'bg-[#232323]' : 'bg-gradient-to-b from-white to-purple-200'}`}
+    >
+        <style>{animationStyles}</style>
+
+        <div className={`absolute inset-0 transition-opacity -rotate-12 -translate-x-1/2 ${theme === 'dark' ? 'opacity-40' : 'opacity-80'}`}>
+            <AnimatedGrid />
+        </div>
+        
+        <div className={`absolute inset-0 
+            ${theme === 'dark' 
+                ? 'bg-gradient-to-t from-[#232323] to-purple-900/30' 
+                : 'bg-gradient-to-t from-purple-200 via-purple-200/50 to-transparent'}`
+        }></div>
+
+        <HeroContent />
     </div>
   );
 };
 
-export default DarkModeSignUp;
+export default LandingPage;
