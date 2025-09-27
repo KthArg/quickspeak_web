@@ -28,10 +28,12 @@ const WordDetailModal = ({
   word,
   onUpdate,
   onClose,
+  onDelete,
 }: {
   word: Word;
   onUpdate: () => void;
   onClose: () => void;
+  onDelete: (wordId: string) => void;
 }) => {
   const { theme } = useTheme();
   return (
@@ -131,6 +133,7 @@ const WordDetailModal = ({
               Close
             </button>
             <button
+              onClick={() => onDelete(word.id)}
               className={`flex-1 text-white rounded-full py-1.5 border-2 ${
                 theme === "dark"
                   ? "bg-red-500 border-red-500"
@@ -148,7 +151,7 @@ const WordDetailModal = ({
 
 const DictionaryDetailPage: NextPage = () => {
   const { theme } = useTheme();
-  const { words, loading, error, updateWord, updateWordsInBatch } =
+  const { words, loading, error, updateWord, updateWordsInBatch, deleteWord } =
     useDictionary();
   const [selectedWord, setSelectedWord] = useState<ApiWord | null>(null);
   const [activeFilters, setActiveFilters] = useState([
@@ -199,6 +202,15 @@ const DictionaryDetailPage: NextPage = () => {
       }
     } catch (error) {
       console.error("Error updating translations:", error);
+    }
+  };
+
+  const handleDeleteWord = async (wordId: string) => {
+    try {
+      await deleteWord(wordId);
+      setSelectedWord(null); // Cerrar el modal después de eliminar
+    } catch (error) {
+      console.error("Error deleting word:", error);
     }
   };
 
@@ -323,6 +335,7 @@ const DictionaryDetailPage: NextPage = () => {
           word={selectedWord}
           onUpdate={handleUpdateAll}
           onClose={() => setSelectedWord(null)}
+          onDelete={handleDeleteWord}
         />
       )}
     </div>

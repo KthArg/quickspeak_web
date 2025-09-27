@@ -90,7 +90,9 @@ export const useDictionary = () => {
     try {
       const response = await dictionaryService.deleteWord(wordId);
       if (response.success) {
-        await fetchWords(); // Refresh words list
+        // En lugar de fetchWords(), actualizar el estado local directamente
+        // Esto simula la eliminación ya que el mock no elimina realmente
+        setWords(prevWords => prevWords.filter(word => word.id !== wordId));
         return response;
       }
       throw new Error(response.message || 'Failed to delete word');
