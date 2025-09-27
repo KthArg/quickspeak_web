@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read # This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +21,7 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '20.x'
+          node-version: "20.x"
 
       - name: npm install, build, and test
         run: |
@@ -29,7 +29,6 @@ jobs:
           npm run build --if-present
           npm run test --if-present
 
-      # NEW STEP: Add this entire block to verify .next exists after build
       - name: Verify build output
         run: |
           echo "=== Listing all files in workspace ==="
@@ -37,64 +36,52 @@ jobs:
           echo "=== Checking .next directory ==="
           if [ -d ".next" ]; then
             ls -la .next
-            du -sh .next  # Shows size of .next folder
+            du -sh .next
           else
             echo ".next directory is MISSING after build!"
           fi
 
-      # NEW: Create explicit deployment zip that includes .next
       - name: Create deployment zip (includes hidden files like .next)
         run: |
           echo "Creating zip with .next included..."
-          # Zip the entire workspace, but exclude heavy/unneeded stuff to keep it fast/small
-          # -r = recursive, . = current dir (includes dotfiles like .next)
-          # -x excludes patterns (node_modules is huge and not needed on server)
-          zip -r deploy.zip . -x "node_modules/*" -x ".git/*" -x ".github/*" -x "*.log" -x "deploy.zip"
+          zip -r deploy.zip . \
+            -x "node_modules/*" \
+            -x ".git/*" \
+            -x ".github/*" \
+            -x "*.log" \
+            -x "deploy.zip" \
+            -x ".next/cache/*"
           echo "Zip created successfully."
 
-      # NEW: Optional verification of zip contents (confirms .next is inside)
       - name: Inspect zip contents
         run: |
-          echo "Zip contents (first 100 lines, looking for .next):"
-          unzip -l deploy.zip | sed -n '1,100p' | grep -i next || echo ".next not in zip? Check exclusions."
+          echo "Zip contents (first 120 lines, looking for .next):"
+          unzip -l deploy.zip | sed -n '1,120p' | grep -i ".next" || true
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: deploy.zip  # Now upload the zip instead of the whole folder
+          path: deploy.zip
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: node-app
-          # Downloads the zip to ./node-app/deploy.zip
+          path: ./artifact
 
-      # NEW: Unzip the artifact to extract contents to current directory (avoids path issues)
-      - name: Unzip deployment artifact
-        run: |
-          unzip ./node-app/deploy.zip -d .
-          rm ./node-app/deploy.zip  # Clean up the zip (optional)
+      - name: List artifact folder (debug)
+        run: ls -la ./artifact
 
-      # NEW: Optional verification: List extracted files (confirms .next is ready for deploy)
-      - name: Verify extracted contents
-        run: |
-          echo "=== Extracted files ==="
-          ls -la
-          echo "=== .next after extraction ==="
-          ls -la .next || true
-
-      # FIXED: Deploy the extracted folder directly (package: . scans current dir for app files)
-      - name: 'Deploy to Azure Web App'
-        id: deploy-to-webapp
+      - name: Deploy to Azure Web App (zip)
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'QuickSpeakWebTest'
-          slot-name: 'Production'
-          package: .  # Now deploys from current dir (extracted app files)
+          app-name: "QuickSpeakWebTest"
+          slot-name: "Production"
+          package: ./artifact/deploy.zip
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_CA5C60C301BB44CF9478B4E80A88A1FB }}
