@@ -73,14 +73,28 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-          # Downloads the zip to ./node-app/deploy.zip (we'll reference it directly)
+          # Downloads the zip to ./node-app/deploy.zip
 
-      # NEW: Deploy the zip directly to Azure (no re-zipping needed)
+      # NEW: Unzip the artifact to extract contents to current directory (avoids path issues)
+      - name: Unzip deployment artifact
+        run: |
+          unzip ./node-app/deploy.zip -d .
+          rm ./node-app/deploy.zip  # Clean up the zip (optional)
+
+      # NEW: Optional verification: List extracted files (confirms .next is ready for deploy)
+      - name: Verify extracted contents
+        run: |
+          echo "=== Extracted files ==="
+          ls -la
+          echo "=== .next after extraction ==="
+          ls -la .next || true
+
+      # FIXED: Deploy the extracted folder directly (package: . scans current dir for app files)
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'QuickSpeakWebTest'
           slot-name: 'Production'
-          package: ./node-app/deploy.zip  # Point to the exact zip file
+          package: .  # Now deploys from current dir (extracted app files)
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_CA5C60C301BB44CF9478B4E80A88A1FB }}
