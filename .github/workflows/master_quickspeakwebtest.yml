@@ -42,11 +42,27 @@ jobs:
             echo ".next directory is MISSING after build!"
           fi
 
+      # NEW: Create explicit deployment zip that includes .next
+      - name: Create deployment zip (includes hidden files like .next)
+        run: |
+          echo "Creating zip with .next included..."
+          # Zip the entire workspace, but exclude heavy/unneeded stuff to keep it fast/small
+          # -r = recursive, . = current dir (includes dotfiles like .next)
+          # -x excludes patterns (node_modules is huge and not needed on server)
+          zip -r deploy.zip . -x "node_modules/*" -x ".git/*" -x ".github/*" -x "*.log" -x "deploy.zip"
+          echo "Zip created successfully."
+
+      # NEW: Optional verification of zip contents (confirms .next is inside)
+      - name: Inspect zip contents
+        run: |
+          echo "Zip contents (first 100 lines, looking for .next):"
+          unzip -l deploy.zip | sed -n '1,100p' | grep -i next || echo ".next not in zip? Check exclusions."
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: deploy.zip  # Now upload the zip instead of the whole folder
 
   deploy:
     runs-on: ubuntu-latest
@@ -57,13 +73,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-      
+          # Downloads the zip to ./node-app/deploy.zip (we'll reference it directly)
+
+      # NEW: Deploy the zip directly to Azure (no re-zipping needed)
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'QuickSpeakWebTest'
           slot-name: 'Production'
-          package: .
-
+          package: ./node-app/deploy.zip  # Point to the exact zip file
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_CA5C60C301BB44CF9478B4E80A88A1FB }}
