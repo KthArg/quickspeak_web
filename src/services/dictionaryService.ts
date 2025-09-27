@@ -36,6 +36,26 @@ export const dictionaryService = {
     return await apiClient.put<ApiResponse<Word>>(`/dictionary/words/${wordId}`, wordData);
   },
 
+  // PUT /dictionary/words/batch-update - Update Multiple Words
+  async updateWordsInBatch(
+    updates: Array<{
+      id: string;
+      word?: string;
+      language?: string;
+      color?: string;
+      translated?: boolean;
+      translations?: Translation[];
+    }>
+  ): Promise<ApiResponse<{
+    updatedWords: Word[];
+    totalUpdated: number;
+  }>> {
+    return await apiClient.put<ApiResponse<{
+      updatedWords: Word[];
+      totalUpdated: number;
+    }>>('/dictionary/words/batch-update', { updates });
+  },
+
   // DELETE /dictionary/words/{wordId} - Delete Word
   async deleteWord(wordId: string): Promise<ApiResponse<{ success: boolean }>> {
     return await apiClient.delete<ApiResponse<{ success: boolean }>>(`/dictionary/words/${wordId}`);

@@ -62,6 +62,30 @@ export const useDictionary = () => {
     }
   };
 
+  const updateWordsInBatch = async (
+    updates: Array<{
+      id: string;
+      word?: string;
+      language?: string;
+      color?: string;
+      translated?: boolean;
+      translations?: Translation[];
+    }>
+  ) => {
+    try {
+      const response = await dictionaryService.updateWordsInBatch(updates);
+      if (response.success) {
+        await fetchWords(); // Refresh words list
+        return response;
+      }
+      throw new Error(response.message || 'Failed to update words');
+    } catch (err) {
+      setError('Failed to update words');
+      console.error('Error updating words:', err);
+      throw err;
+    }
+  };
+
   const deleteWord = async (wordId: string) => {
     try {
       const response = await dictionaryService.deleteWord(wordId);
@@ -105,6 +129,7 @@ export const useDictionary = () => {
     error,
     addWord,
     updateWord,
+    updateWordsInBatch,
     deleteWord,
     translateWord,
     refreshWords: fetchWords,

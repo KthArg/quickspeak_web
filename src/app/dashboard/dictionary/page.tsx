@@ -148,7 +148,8 @@ const WordDetailModal = ({
 
 const DictionaryDetailPage: NextPage = () => {
   const { theme } = useTheme();
-  const { words, loading, error, updateWord } = useDictionary();
+  const { words, loading, error, updateWord, updateWordsInBatch } =
+    useDictionary();
   const [selectedWord, setSelectedWord] = useState<ApiWord | null>(null);
   const [activeFilters, setActiveFilters] = useState([
     "Recently Added",
@@ -162,12 +163,35 @@ const DictionaryDetailPage: NextPage = () => {
 
   const handleUpdateAll = async () => {
     try {
-      const updatePromises = words
+      // Filtrar palabras que necesitan traducción
+      const wordsToUpdate = words
         .filter((word) => !word.translated)
-        .map((word) => updateWord(word.id, { translated: true }));
+        .map((word) => ({
+          id: word.id,
+          translated: true,
+          // Mantener las traducciones existentes o agregar traducciones simuladas
+          translations:
+            word.translations.length > 0
+              ? word.translations
+              : [
+                  {
+                    language: "English",
+                    word: `${word.word}_EN`, // Traducción simulada
+                    color: "bg-yellow-500",
+                  },
+                  {
+                    language: "German",
+                    word: `${word.word}_DE`, // Traducción simulada
+                    color: "bg-red-500",
+                  },
+                ],
+        }));
 
-      await Promise.all(updatePromises);
+      if (wordsToUpdate.length > 0) {
+        await updateWordsInBatch(wordsToUpdate);
+      }
 
+      // Actualizar palabra seleccionada si no estaba traducida
       if (selectedWord && !selectedWord.translated) {
         setSelectedWord((prev) =>
           prev ? { ...prev, translated: true } : null
