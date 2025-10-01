@@ -67,6 +67,24 @@ export const useSpeakers = () => {
     }
   };
 
+  const updateChatColor = async (speakerId: string, color: string) => {
+    try {
+      const response = await speakerService.updateChatColor(speakerId, color);
+      if (response.success) {
+        // Update the color locally for immediate UI feedback
+        setSavedSpeakers(prev => prev.map(speaker => 
+          speaker.id === speakerId ? { ...speaker, color } : speaker
+        ));
+        return response;
+      }
+      throw new Error(response.message || 'Failed to update chat color');
+    } catch (err) {
+      setError('Failed to update chat color');
+      console.error('Error updating chat color:', err);
+      throw err;
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -85,6 +103,7 @@ export const useSpeakers = () => {
     getSpeakerProfile,
     saveSpeaker,
     removeSavedSpeaker,
+    updateChatColor,
     refreshSpeakers: fetchSpeakersCatalog,
     refreshSavedSpeakers: fetchSavedSpeakers,
   };

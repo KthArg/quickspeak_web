@@ -34,4 +34,9 @@ export const speakerService = {
   async removeSavedSpeaker(speakerId: string): Promise<ApiResponse<{ success: boolean }>> {
     return await apiClient.delete<ApiResponse<{ success: boolean }>>(`/speakers/saved/${speakerId}`);
   },
+
+  // PUT /speakers/saved/{speakerId}/color - Update Chat Color
+  async updateChatColor(speakerId: string, color: string): Promise<ApiResponse<{ success: boolean }>> {
+    return await apiClient.post<ApiResponse<{ success: boolean }>>(`/speakers/saved/${speakerId}/color`, { color });
+  },
 };

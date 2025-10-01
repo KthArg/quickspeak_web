@@ -54,6 +54,7 @@ export interface Speaker {
   };
   savedAt?: string;
   lastChatted?: string;
+  color?: string;
 }
 
 export interface Conversation {

@@ -5,6 +5,7 @@ import type { NextPage } from "next";
 import Image from "next/image";
 import { useTheme } from "@/app/contexts/ThemeContext";
 import { useChat } from "@/hooks/useChat";
+import { useSpeakers } from "@/hooks/useSpeakers";
 import { ChatMessages, Message as ApiMessage, Speaker } from "@/services/types";
 import { useSearchParams } from "next/navigation";
 import {
@@ -18,24 +19,105 @@ import {
   X,
 } from "lucide-react";
 
-// Default theme configuration
-const defaultTheme = {
-  // Dark mode colors
-  headerBg: "bg-teal-400",
-  inputBg: "bg-teal-400",
-  speakerBubbleBg: "bg-teal-400",
-  userBubbleBg: "bg-sky-500",
-  textColor: "text-gray-800",
-  gradientFrom: "from-gray-900",
-  gradientTo: "to-teal-900",
-  // Light mode colors
-  lightHeaderBg: "bg-teal-400",
-  lightInputBg: "bg-teal-400",
-  lightSpeakerBubbleBg: "bg-teal-200",
-  lightUserBubbleBg: "bg-gray-700",
-  lightTextColor: "text-black",
-  lightGradientFrom: "from-white",
-  lightGradientTo: "to-teal-100",
+// Color mappings for different speaker colors
+const colorMappings = {
+  teal: {
+    headerBg: "bg-teal-400",
+    inputBg: "bg-teal-400",
+    speakerBubbleBg: "bg-teal-400",
+    lightHeaderBg: "bg-teal-400",
+    lightInputBg: "bg-teal-400",
+    lightSpeakerBubbleBg: "bg-teal-200",
+    gradientTo: "to-teal-900",
+    lightGradientTo: "to-teal-100",
+  },
+  blue: {
+    headerBg: "bg-blue-400",
+    inputBg: "bg-blue-400",
+    speakerBubbleBg: "bg-blue-400",
+    lightHeaderBg: "bg-blue-400",
+    lightInputBg: "bg-blue-400",
+    lightSpeakerBubbleBg: "bg-blue-200",
+    gradientTo: "to-blue-900",
+    lightGradientTo: "to-blue-100",
+  },
+  red: {
+    headerBg: "bg-red-400",
+    inputBg: "bg-red-400",
+    speakerBubbleBg: "bg-red-400",
+    lightHeaderBg: "bg-red-400",
+    lightInputBg: "bg-red-400",
+    lightSpeakerBubbleBg: "bg-red-200",
+    gradientTo: "to-red-900",
+    lightGradientTo: "to-red-100",
+  },
+  yellow: {
+    headerBg: "bg-yellow-400",
+    inputBg: "bg-yellow-400",
+    speakerBubbleBg: "bg-yellow-400",
+    lightHeaderBg: "bg-yellow-400",
+    lightInputBg: "bg-yellow-400",
+    lightSpeakerBubbleBg: "bg-yellow-200",
+    gradientTo: "to-yellow-900",
+    lightGradientTo: "to-yellow-100",
+  },
+  green: {
+    headerBg: "bg-green-400",
+    inputBg: "bg-green-400",
+    speakerBubbleBg: "bg-green-400",
+    lightHeaderBg: "bg-green-400",
+    lightInputBg: "bg-green-400",
+    lightSpeakerBubbleBg: "bg-green-200",
+    gradientTo: "to-green-900",
+    lightGradientTo: "to-green-100",
+  },
+  purple: {
+    headerBg: "bg-purple-400",
+    inputBg: "bg-purple-400",
+    speakerBubbleBg: "bg-purple-400",
+    lightHeaderBg: "bg-purple-400",
+    lightInputBg: "bg-purple-400",
+    lightSpeakerBubbleBg: "bg-purple-200",
+    gradientTo: "to-purple-900",
+    lightGradientTo: "to-purple-100",
+  },
+  pink: {
+    headerBg: "bg-pink-400",
+    inputBg: "bg-pink-400",
+    speakerBubbleBg: "bg-pink-400",
+    lightHeaderBg: "bg-pink-400",
+    lightInputBg: "bg-pink-400",
+    lightSpeakerBubbleBg: "bg-pink-200",
+    gradientTo: "to-pink-900",
+    lightGradientTo: "to-pink-100",
+  },
+  orange: {
+    headerBg: "bg-orange-400",
+    inputBg: "bg-orange-400",
+    speakerBubbleBg: "bg-orange-400",
+    lightHeaderBg: "bg-orange-400",
+    lightInputBg: "bg-orange-400",
+    lightSpeakerBubbleBg: "bg-orange-200",
+    gradientTo: "to-orange-900",
+    lightGradientTo: "to-orange-100",
+  },
+};
+
+// Function to generate theme based on speaker color
+const generateTheme = (speakerColor?: string) => {
+  const color = speakerColor || "teal";
+  const colorConfig =
+    colorMappings[color as keyof typeof colorMappings] || colorMappings.teal;
+
+  return {
+    ...colorConfig,
+    userBubbleBg: "bg-sky-500",
+    textColor: "text-gray-800",
+    gradientFrom: "from-gray-900",
+    lightUserBubbleBg: "bg-gray-700",
+    lightTextColor: "text-black",
+    lightGradientFrom: "from-white",
+  };
 };
 
 // --- SUB-COMPONENTE: Modal de Perfil del Speaker ---
@@ -43,10 +125,12 @@ const SpeakerProfileModal = ({
   speaker,
   theme,
   onClose,
+  onColorChange,
 }: {
   speaker: Speaker;
-  theme: typeof defaultTheme;
+  theme: ReturnType<typeof generateTheme>;
   onClose: () => void;
+  onColorChange: (color: string) => void;
 }) => {
   const { theme: currentTheme } = useTheme();
   const isDark = currentTheme === "dark";
@@ -130,10 +214,24 @@ const SpeakerProfileModal = ({
             isDark ? "bg-gray-800" : "bg-white"
           }`}
         >
-          <div className="w-8 h-8 rounded-full bg-teal-400 border-2 border-white cursor-pointer"></div>
-          <div className="w-8 h-8 rounded-full bg-sky-500 cursor-pointer"></div>
-          <div className="w-8 h-8 rounded-full bg-red-500 cursor-pointer"></div>
-          <div className="w-8 h-8 rounded-full bg-yellow-500 cursor-pointer"></div>
+          {[
+            { color: "teal", bg: "bg-teal-400" },
+            { color: "blue", bg: "bg-blue-500" },
+            { color: "red", bg: "bg-red-500" },
+            { color: "yellow", bg: "bg-yellow-500" },
+            { color: "green", bg: "bg-green-500" },
+            { color: "purple", bg: "bg-purple-500" },
+            { color: "pink", bg: "bg-pink-500" },
+            { color: "orange", bg: "bg-orange-500" },
+          ].map(({ color, bg }) => (
+            <div
+              key={color}
+              className={`w-8 h-8 rounded-full ${bg} cursor-pointer hover:scale-110 transition-transform ${
+                speaker.color === color ? "ring-2 ring-white" : ""
+              }`}
+              onClick={() => onColorChange(color)}
+            />
+          ))}
         </div>
       </div>
     </div>
@@ -149,7 +247,7 @@ const AnalyzeWordsModal = ({
 }: {
   message: ApiMessage;
   speaker: Speaker;
-  theme: typeof defaultTheme;
+  theme: ReturnType<typeof generateTheme>;
   onClose: () => void;
 }) => {
   const { theme: currentTheme } = useTheme();
@@ -265,7 +363,7 @@ const ChatHeader = ({
   onAvatarClick,
 }: {
   speaker: Speaker;
-  theme: typeof defaultTheme;
+  theme: ReturnType<typeof generateTheme>;
   onAvatarClick: () => void;
 }) => {
   const { theme: currentTheme } = useTheme();
@@ -316,7 +414,7 @@ const ChatMessage = ({
 }: {
   message: ApiMessage;
   speaker: Speaker;
-  theme: typeof defaultTheme;
+  theme: ReturnType<typeof generateTheme>;
   onAnalyze: (msg: ApiMessage) => void;
 }) => {
   const { theme: currentTheme } = useTheme();
@@ -389,7 +487,7 @@ const ChatInputBar = ({
   theme,
   onSendMessage,
 }: {
-  theme: typeof defaultTheme;
+  theme: ReturnType<typeof generateTheme>;
   onSendMessage: (message: string) => void;
 }) => {
   const { theme: currentTheme } = useTheme();
@@ -458,9 +556,10 @@ const ChatInputBar = ({
 
 // --- COMPONENTE PRINCIPAL DE LA PÁGINA ---
 const ChatPage: NextPage = () => {
-  const { theme: currentTheme } = useTheme();
-  const isDark = currentTheme === "dark";
+  const { theme: themeMode } = useTheme();
+  const isDark = themeMode === "dark";
   const { getChatMessages, sendMessage, loading, error } = useChat();
+  const { updateChatColor } = useSpeakers();
   const searchParams = useSearchParams();
 
   // Estados locales
@@ -508,6 +607,26 @@ const ChatPage: NextPage = () => {
     }
   };
 
+  // Función para cambiar color del chat
+  const handleColorChange = async (color: string) => {
+    if (!chatData) return;
+
+    try {
+      await updateChatColor(chatData.speakerInfo.id, color);
+      // Actualizar localmente
+      setChatData((prev) =>
+        prev
+          ? {
+              ...prev,
+              speakerInfo: { ...prev.speakerInfo, color },
+            }
+          : null
+      );
+    } catch (err) {
+      console.error("Error updating chat color:", err);
+    }
+  };
+
   // Mostrar loading o error
   if (loading) {
     return (
@@ -539,18 +658,19 @@ const ChatPage: NextPage = () => {
   }
 
   const { speakerInfo, messages } = chatData;
+  const currentTheme = generateTheme(speakerInfo.color);
 
   return (
     <div
       className={`w-full h-screen font-cabin flex flex-col overflow-hidden transition-colors ${
         isDark
-          ? `bg-gradient-to-b ${defaultTheme.gradientFrom} ${defaultTheme.gradientTo}`
-          : `bg-gradient-to-b ${defaultTheme.lightGradientFrom} ${defaultTheme.lightGradientTo}`
+          ? `bg-gradient-to-b ${currentTheme.gradientFrom} ${currentTheme.gradientTo}`
+          : `bg-gradient-to-b ${currentTheme.lightGradientFrom} ${currentTheme.lightGradientTo}`
       }`}
     >
       <ChatHeader
         speaker={speakerInfo}
-        theme={defaultTheme}
+        theme={currentTheme}
         onAvatarClick={() => setIsProfileModalOpen(true)}
       />
 
@@ -564,7 +684,7 @@ const ChatPage: NextPage = () => {
                 <ChatMessage
                   message={msg}
                   speaker={speakerInfo}
-                  theme={defaultTheme}
+                  theme={currentTheme}
                   onAnalyze={setAnalyzingMessage}
                 />
                 {index === messages.length - 1 && (
@@ -583,20 +703,21 @@ const ChatPage: NextPage = () => {
         </div>
       </main>
 
-      <ChatInputBar theme={defaultTheme} onSendMessage={handleSendMessage} />
+      <ChatInputBar theme={currentTheme} onSendMessage={handleSendMessage} />
 
       {isProfileModalOpen && (
         <SpeakerProfileModal
           speaker={speakerInfo}
-          theme={defaultTheme}
+          theme={currentTheme}
           onClose={() => setIsProfileModalOpen(false)}
+          onColorChange={handleColorChange}
         />
       )}
       {analyzingMessage && (
         <AnalyzeWordsModal
           message={analyzingMessage}
           speaker={speakerInfo}
-          theme={defaultTheme}
+          theme={currentTheme}
           onClose={() => setAnalyzingMessage(null)}
         />
       )}
