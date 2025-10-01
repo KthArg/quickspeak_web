@@ -48,7 +48,7 @@ const formatTimestamp = (timestamp: string) => {
 
 // Types
 interface ChatListItemProps {
-  id: number;
+  id: string;
   name: string;
   lastMessage: string;
   timestamp: string;
@@ -110,7 +110,7 @@ const SpeakersPageV2: NextPage = () => {
 
   // Transform conversations to match our chat display format
   const recentChats = conversations.map((conversation, index) => ({
-    id: parseInt(conversation.id),
+    id: conversation.id, // Use string id directly instead of parseInt
     name: conversation.speakerName,
     lastMessage: conversation.lastMessage,
     timestamp: conversation.timestamp,

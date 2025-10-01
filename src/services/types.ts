@@ -54,6 +54,7 @@ export interface Speaker {
   };
   savedAt?: string;
   lastChatted?: string;
+  color?: string;
 }
 
 export interface Conversation {
@@ -81,6 +82,21 @@ export interface Message {
   type: 'text' | 'audio';
 }
 
+// API Response types (what the API actually returns)
+export interface ApiChatMessage {
+  id: number;
+  sender: 'speaker' | 'user';
+  text: string;
+  ts: string;
+}
+
+export interface ApiChatResponse {
+  conversationId: string;
+  speakerId: string;
+  messages: ApiChatMessage[];
+}
+
+// Frontend types (what our components expect)
 export interface ChatMessages {
   conversationId: string;
   messages: Message[];

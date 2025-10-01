@@ -1,5 +1,5 @@
-// Base API configuration for QuickSpeakMockApi
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://your-api-base-url.com';
+// Base API configuration for QuickSpeak Azure API
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://apiprojectmanagement.azure-api.net/quickspeak';
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
 export const apiClient = {
@@ -8,13 +8,9 @@ export const apiClient = {
     
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      ...(API_KEY && { 'Ocp-Apim-Subscription-Key': API_KEY }),
       ...(options.headers as Record<string, string>),
     };
-
-    // Add API key to headers if available
-    if (API_KEY) {
-      headers['Ocp-Apim-Subscription-Key'] = API_KEY;
-    }
     
     const config: RequestInit = {
       headers,
