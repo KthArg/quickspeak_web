@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { NextPage } from "next";
 import Image from "next/image";
 import { useTheme } from "@/app/contexts/ThemeContext";
+import { useChat } from "@/hooks/useChat";
+import { ChatMessages, Message as ApiMessage, Speaker } from "@/services/types";
+import { useSearchParams } from "next/navigation";
 import {
   Menu,
   Book,
@@ -15,52 +18,25 @@ import {
   X,
 } from "lucide-react";
 
-// --- DATOS DINÁMICOS DEL CHAT ---
-const chatData = {
-  speaker: {
-    name: "Harper",
-    description: "German Speaker",
-    avatarSeed: "Harper",
-    flagUrl: "https://unpkg.com/circle-flags/flags/de.svg",
-    personality: ["😛 Cheeky", "🤓 Nerdy"],
-    interests: ["🧛 Vampires", "🦾 Robotics", "🎵 Coldplay"],
-  },
-  theme: {
-    // Dark mode colors
-    headerBg: "bg-teal-400",
-    inputBg: "bg-teal-400",
-    speakerBubbleBg: "bg-teal-400",
-    userBubbleBg: "bg-sky-500",
-    textColor: "text-gray-800",
-    gradientFrom: "from-gray-900",
-    gradientTo: "to-teal-900",
-    // Light mode colors
-    lightHeaderBg: "bg-teal-400",
-    lightInputBg: "bg-teal-400",
-    lightSpeakerBubbleBg: "bg-teal-200",
-    lightUserBubbleBg: "bg-gray-700",
-    lightTextColor: "text-black",
-    lightGradientFrom: "from-white",
-    lightGradientTo: "to-teal-100",
-  },
-  messages: [
-    { id: 1, sender: "speaker", text: "Hallo, wie geht's?" },
-    { id: 2, sender: "user", text: "Hallo, mir geht's gut, und door?" },
-    {
-      id: 3,
-      sender: "speaker",
-      text: "Mir geht es gut, aber du hast einen kleinen Fehler gemacht, es heißt nicht “door”, sondern “dir”.",
-    },
-    {
-      id: 4,
-      sender: "user",
-      text: "Danke, danke! Übrigens, magst du Coldplay?",
-    },
-    { id: 5, sender: "speaker", text: "Ich mag Coldplay nicht besonders, du?" },
-  ],
+// Default theme configuration
+const defaultTheme = {
+  // Dark mode colors
+  headerBg: "bg-teal-400",
+  inputBg: "bg-teal-400",
+  speakerBubbleBg: "bg-teal-400",
+  userBubbleBg: "bg-sky-500",
+  textColor: "text-gray-800",
+  gradientFrom: "from-gray-900",
+  gradientTo: "to-teal-900",
+  // Light mode colors
+  lightHeaderBg: "bg-teal-400",
+  lightInputBg: "bg-teal-400",
+  lightSpeakerBubbleBg: "bg-teal-200",
+  lightUserBubbleBg: "bg-gray-700",
+  lightTextColor: "text-black",
+  lightGradientFrom: "from-white",
+  lightGradientTo: "to-teal-100",
 };
-
-type Message = (typeof chatData.messages)[0];
 
 // --- SUB-COMPONENTE: Modal de Perfil del Speaker ---
 const SpeakerProfileModal = ({
@@ -68,8 +44,8 @@ const SpeakerProfileModal = ({
   theme,
   onClose,
 }: {
-  speaker: typeof chatData.speaker;
-  theme: typeof chatData.theme;
+  speaker: Speaker;
+  theme: typeof defaultTheme;
   onClose: () => void;
 }) => {
   const { theme: currentTheme } = useTheme();
@@ -103,12 +79,13 @@ const SpeakerProfileModal = ({
             >
               <h3 className="text-2xl font-bold">{speaker.name}</h3>
               <p className="flex items-center justify-center gap-1 font-semibold">
-                {speaker.description.split(" ")[0]} <span>🇩🇪</span>
+                {speaker.description?.split(" ")[0] || speaker.language}{" "}
+                <span>🇩🇪</span>
               </p>
             </div>
             <div className="relative w-32 h-32">
               <Image
-                src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${speaker.avatarSeed}`}
+                src={speaker.avatarUrl}
                 alt={`Avatar of ${speaker.name}`}
                 layout="fill"
                 unoptimized={true}
@@ -123,17 +100,17 @@ const SpeakerProfileModal = ({
             <div>
               <h4 className="font-bold text-lg">Personality</h4>
               <ul className="mt-1 space-y-1 text-md">
-                {speaker.personality.map((p) => (
-                  <li key={p}>{p}</li>
-                ))}
+                {speaker.personality?.map((p) => <li key={p}>{p}</li>) || (
+                  <li>No personality traits available</li>
+                )}
               </ul>
             </div>
             <div>
               <h4 className="font-bold text-lg">Interests</h4>
               <ul className="mt-1 space-y-1 text-md">
-                {speaker.interests.map((i) => (
-                  <li key={i}>{i}</li>
-                ))}
+                {speaker.interests?.map((i) => <li key={i}>{i}</li>) || (
+                  <li>No interests available</li>
+                )}
               </ul>
             </div>
             <button
@@ -170,15 +147,17 @@ const AnalyzeWordsModal = ({
   theme,
   onClose,
 }: {
-  message: Message;
-  speaker: typeof chatData.speaker;
-  theme: typeof chatData.theme;
+  message: ApiMessage;
+  speaker: Speaker;
+  theme: typeof defaultTheme;
   onClose: () => void;
 }) => {
   const { theme: currentTheme } = useTheme();
   const isDark = currentTheme === "dark";
-  const words = message.text.split(/\s+/);
-  const [selectedWords, setSelectedWords] = useState<string[]>(["heißt"]);
+  const words = message.content.split(/\s+/);
+  const [selectedWords, setSelectedWords] = useState<string[]>([
+    words[0] || "",
+  ]);
 
   const toggleWordSelection = (word: string) =>
     setSelectedWords((prev) =>
@@ -211,7 +190,7 @@ const AnalyzeWordsModal = ({
               className="rounded-full object-cover"
             />
             <Image
-              src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${speaker.avatarSeed}`}
+              src={speaker.avatarUrl}
               alt={`Avatar of ${speaker.name}`}
               layout="fill"
               className="rounded-full"
@@ -225,7 +204,7 @@ const AnalyzeWordsModal = ({
                 isDark ? "text-gray-300" : "text-gray-700"
               }`}
             >
-              {speaker.description}
+              {speaker.description || `${speaker.language} Speaker`}
             </p>
           </div>
         </div>
@@ -285,8 +264,8 @@ const ChatHeader = ({
   theme,
   onAvatarClick,
 }: {
-  speaker: typeof chatData.speaker;
-  theme: typeof chatData.theme;
+  speaker: Speaker;
+  theme: typeof defaultTheme;
   onAvatarClick: () => void;
 }) => {
   const { theme: currentTheme } = useTheme();
@@ -303,7 +282,7 @@ const ChatHeader = ({
       <div className="flex flex-col items-center">
         <h1 className="text-xl font-bold">{speaker.name}</h1>
         <p className={`text-sm ${isDark ? "opacity-90" : "opacity-70"}`}>
-          {speaker.description}
+          {speaker.description || `${speaker.language} Speaker`}
         </p>
       </div>
       <button
@@ -317,7 +296,7 @@ const ChatHeader = ({
           className="rounded-full object-cover"
         />
         <Image
-          src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${speaker.avatarSeed}`}
+          src={speaker.avatarUrl}
           alt={`Avatar of ${speaker.name}`}
           layout="fill"
           className="rounded-full"
@@ -335,14 +314,14 @@ const ChatMessage = ({
   theme,
   onAnalyze,
 }: {
-  message: Message;
-  speaker: typeof chatData.speaker;
-  theme: typeof chatData.theme;
-  onAnalyze: (msg: Message) => void;
+  message: ApiMessage;
+  speaker: Speaker;
+  theme: typeof defaultTheme;
+  onAnalyze: (msg: ApiMessage) => void;
 }) => {
   const { theme: currentTheme } = useTheme();
   const isDark = currentTheme === "dark";
-  const isUser = message.sender === "user";
+  const isUser = message.senderType === "user";
   return (
     <div
       className={`flex items-start gap-3 w-full ${
@@ -358,7 +337,7 @@ const ChatMessage = ({
             className="rounded-full object-cover"
           />
           <Image
-            src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${speaker.avatarSeed}`}
+            src={speaker.avatarUrl}
             alt={`Avatar of ${speaker.name}`}
             layout="fill"
             className="rounded-full"
@@ -378,7 +357,7 @@ const ChatMessage = ({
               : theme.lightSpeakerBubbleBg + " " + theme.lightTextColor
           }`}
         >
-          <p className="font-semibold">{message.text}</p>
+          <p className="font-semibold">{message.content}</p>
         </div>
         {!isUser && (
           <div
@@ -406,10 +385,31 @@ const ChatMessage = ({
 };
 
 // --- SUB-COMPONENTE: Barra de Entrada de Texto ---
-const ChatInputBar = ({ theme }: { theme: typeof chatData.theme }) => {
+const ChatInputBar = ({
+  theme,
+  onSendMessage,
+}: {
+  theme: typeof defaultTheme;
+  onSendMessage: (message: string) => void;
+}) => {
   const { theme: currentTheme } = useTheme();
   const isDark = currentTheme === "dark";
   const [message, setMessage] = useState("");
+
+  const handleSend = () => {
+    if (message.trim()) {
+      onSendMessage(message.trim());
+      setMessage("");
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
   return (
     <footer
       className={`flex m-4 rounded-3xl items-center gap-2 sm:gap-4 p-3 shadow-lg z-20 flex-shrink-0 ${
@@ -435,6 +435,7 @@ const ChatInputBar = ({ theme }: { theme: typeof chatData.theme }) => {
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyPress}
           placeholder="Type your message"
           className={`w-full rounded-lg py-3 pl-4 pr-12 outline-none ${
             isDark
@@ -444,6 +445,7 @@ const ChatInputBar = ({ theme }: { theme: typeof chatData.theme }) => {
         />
       </div>
       <button
+        onClick={handleSend}
         className={`${
           isDark ? theme.textColor : theme.lightTextColor
         } hover:opacity-80`}
@@ -456,25 +458,99 @@ const ChatInputBar = ({ theme }: { theme: typeof chatData.theme }) => {
 
 // --- COMPONENTE PRINCIPAL DE LA PÁGINA ---
 const ChatPage: NextPage = () => {
-  const { speaker, theme, messages } = chatData;
   const { theme: currentTheme } = useTheme();
   const isDark = currentTheme === "dark";
+  const { getChatMessages, sendMessage, loading, error } = useChat();
+  const searchParams = useSearchParams();
+
+  // Estados locales
+  const [chatData, setChatData] = useState<ChatMessages | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [analyzingMessage, setAnalyzingMessage] = useState<Message | null>(
+  const [analyzingMessage, setAnalyzingMessage] = useState<ApiMessage | null>(
     null
   );
+  const [conversationId, setConversationId] = useState<string>(
+    searchParams.get("conversationId") || "default-conversation"
+  );
+
+  // Cargar datos del chat al montar el componente
+  useEffect(() => {
+    const loadChatData = async () => {
+      try {
+        const data = await getChatMessages(conversationId);
+        if (data) {
+          setChatData(data);
+        }
+      } catch (err) {
+        console.error("Error loading chat data:", err);
+      }
+    };
+
+    loadChatData();
+  }, [conversationId, getChatMessages]);
+
+  // Función para enviar mensaje
+  const handleSendMessage = async (content: string) => {
+    try {
+      await sendMessage({
+        conversationId,
+        content,
+        type: "text",
+      });
+
+      // Recargar mensajes después de enviar
+      const updatedData = await getChatMessages(conversationId);
+      if (updatedData) {
+        setChatData(updatedData);
+      }
+    } catch (err) {
+      console.error("Error sending message:", err);
+    }
+  };
+
+  // Mostrar loading o error
+  if (loading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-teal-400"></div>
+          <p className="mt-4 text-lg">Loading chat...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !chatData) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 text-lg">
+            {error || "Failed to load chat data"}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-teal-400 text-white rounded-lg"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const { speakerInfo, messages } = chatData;
 
   return (
     <div
       className={`w-full h-screen font-cabin flex flex-col overflow-hidden transition-colors ${
         isDark
-          ? `bg-gradient-to-b ${theme.gradientFrom} ${theme.gradientTo}`
-          : `bg-gradient-to-b ${theme.lightGradientFrom} ${theme.lightGradientTo}`
+          ? `bg-gradient-to-b ${defaultTheme.gradientFrom} ${defaultTheme.gradientTo}`
+          : `bg-gradient-to-b ${defaultTheme.lightGradientFrom} ${defaultTheme.lightGradientTo}`
       }`}
     >
       <ChatHeader
-        speaker={speaker}
-        theme={theme}
+        speaker={speakerInfo}
+        theme={defaultTheme}
         onAvatarClick={() => setIsProfileModalOpen(true)}
       />
 
@@ -487,8 +563,8 @@ const ChatPage: NextPage = () => {
               <React.Fragment key={msg.id}>
                 <ChatMessage
                   message={msg}
-                  speaker={speaker}
-                  theme={theme}
+                  speaker={speakerInfo}
+                  theme={defaultTheme}
                   onAnalyze={setAnalyzingMessage}
                 />
                 {index === messages.length - 1 && (
@@ -507,20 +583,20 @@ const ChatPage: NextPage = () => {
         </div>
       </main>
 
-      <ChatInputBar theme={theme} />
+      <ChatInputBar theme={defaultTheme} onSendMessage={handleSendMessage} />
 
       {isProfileModalOpen && (
         <SpeakerProfileModal
-          speaker={speaker}
-          theme={theme}
+          speaker={speakerInfo}
+          theme={defaultTheme}
           onClose={() => setIsProfileModalOpen(false)}
         />
       )}
       {analyzingMessage && (
         <AnalyzeWordsModal
           message={analyzingMessage}
-          speaker={speaker}
-          theme={theme}
+          speaker={speakerInfo}
+          theme={defaultTheme}
           onClose={() => setAnalyzingMessage(null)}
         />
       )}
