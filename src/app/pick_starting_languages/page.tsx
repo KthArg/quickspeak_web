@@ -65,11 +65,7 @@ const PickLanguagesToLearnPage: NextPage = () => {
         success: boolean;
         selection: { id: number; selected: string[] };
       }>("/selections/starting/languages", { selected: selectedNames });
-      alert(
-        res.success
-          ? `Saved! Selected: ${selectedNames.join(", ")}`
-          : "No se pudo guardar"
-      );
+      window.location.href = "/dashboard/speakers";
     } catch (e: any) {
       setError(e?.message ?? "Error al guardar selección");
     } finally {
@@ -96,12 +92,13 @@ const PickLanguagesToLearnPage: NextPage = () => {
             : "bg-gradient-to-t from-red-300/40 via-transparent to-transparent [filter:blur(100px)]"
         }`}
       />
-
-      <ArrowLeft
-        className={`absolute top-6 left-6 md:top-10 md:left-14 w-9 h-9 md:w-11 md:h-11 cursor-pointer z-20 ${
-          theme === "dark" ? "text-white" : "text-gray-600"
-        }`}
-      />
+      <a href="/pick_native_language">
+        <ArrowLeft
+          className={`absolute top-6 left-6 md:top-10 md:left-14 w-9 h-9 md:w-11 md:h-11 cursor-pointer z-20 ${
+            theme === "dark" ? "text-white" : "text-gray-600"
+          }`}
+        />
+      </a>
 
       <main className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-10 md:gap-12 py-10">
         <header className="w-full flex flex-col items-start text-left gap-2 px-4">

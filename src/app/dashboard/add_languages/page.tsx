@@ -52,45 +52,6 @@ const LanguageIcon = ({
   );
 };
 
-// Sub-componente: Tarjeta "Agregar Más"
-const AddMoreCard = () => {
-  const { theme } = useTheme();
-  return (
-    <button
-      className={`w-full max-w-sm sm:max-w-md flex items-center p-3 sm:p-4 rounded-2xl shadow-lg transition-transform hover:scale-[1.02] ${
-        theme === "dark" ? "bg-cyan-500/80" : "bg-cyan-400"
-      }`}
-    >
-      <div
-        className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full flex-shrink-0 flex items-center justify-center ${
-          theme === "dark" ? "bg-gray-700/50" : "bg-white/50"
-        }`}
-      >
-        <Languages
-          size={40}
-          className={`${theme === "dark" ? "text-cyan-200" : "text-cyan-800"}`}
-        />
-      </div>
-      <div className="flex-grow flex flex-col items-start ml-4 text-left">
-        <h3
-          className={`font-bold text-xl sm:text-2xl ${
-            theme === "dark" ? "text-black" : "text-white"
-          }`}
-        >
-          More Languages
-        </h3>
-        <p
-          className={`font-semibold text-sm sm:text-md ${
-            theme === "dark" ? "text-gray-800" : "text-gray-100"
-          }`}
-        >
-          Tap here to add another language
-        </p>
-      </div>
-    </button>
-  );
-};
-
 // Sub-componente: Modal de Confirmación
 const ConfirmationModal = ({
   lang,
@@ -255,10 +216,6 @@ const AddLanguagePage: NextPage = () => {
           ))}
         </div>
       </main>
-
-      <footer className="mt-16 w-full flex justify-center">
-        <AddMoreCard />
-      </footer>
 
       {selectedLanguage && (
         <ConfirmationModal

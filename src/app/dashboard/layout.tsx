@@ -71,8 +71,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { theme } = useTheme();
 
   const handleLogoutConfirm = () => {
-    console.log("Logging out...");
     setIsLogoutModalOpen(false);
+    window.location.href = '/';
   };
 
   return (

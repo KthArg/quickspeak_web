@@ -380,20 +380,6 @@ const DictionaryDetailPage: NextPage = () => {
         </section>
       </main>
 
-      <footer className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50">
-        <div className="rounded-full flex items-center justify-center gap-12 sm:gap-16 py-3 px-8 sm:py-4 sm:px-12 shadow-2xl bg-cyan-400">
-          <button className="text-black hover:scale-110 transition-transform">
-            <MessageSquare
-              strokeWidth={2.5}
-              className="w-7 h-7 sm:w-8 sm:h-8"
-            />
-          </button>
-          <button className="text-black hover:scale-110 transition-transform">
-            <Bookmark strokeWidth={2.5} className="w-7 h-7 sm:w-8 sm:h-8" />
-          </button>
-        </div>
-      </footer>
-
       {selectedWord && (
         <WordDetailModal
           word={selectedWord}

@@ -302,10 +302,7 @@ const ChatHeader = ({
         isDark ? theme.headerBg : theme.lightHeaderBg
       } ${isDark ? theme.textColor : theme.lightTextColor}`}
     >
-      <button className="hover:opacity-80" aria-label="Menu">
-        <Menu size={32} />
-      </button>
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-start">
         <h1 className="text-xl font-bold">{speaker.name}</h1>
         <p className={`text-sm ${isDark ? "opacity-90" : "opacity-70"}`}>
           {speaker.description}

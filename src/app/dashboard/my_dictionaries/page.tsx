@@ -165,7 +165,8 @@ const DictionaryPage: NextPage = () => {
               />
             ))}
 
-            <button
+            <a
+              href="/dashboard/add_languages"
               className={`w-full flex items-center p-3 sm:p-4 rounded-2xl shadow-lg border-2 border-dashed transition-colors 
               ${
                 theme === "dark"
@@ -199,28 +200,10 @@ const DictionaryPage: NextPage = () => {
                   Tap here to add another language
                 </p>
               </div>
-            </button>
+            </a>
           </section>
         )}
       </main>
-
-      <footer className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50">
-        <div
-          className={`rounded-full flex items-center justify-center gap-12 sm:gap-16 py-3 px-8 sm:py-4 sm:px-12 shadow-2xl ${
-            theme === "dark" ? "bg-cyan-400" : "bg-cyan-400"
-          }`}
-        >
-          <button className="text-black hover:scale-110 transition-transform">
-            <MessageSquare
-              strokeWidth={2.5}
-              className="w-7 h-7 sm:w-8 sm:h-8"
-            />
-          </button>
-          <button className="text-black hover:scale-110 transition-transform">
-            <Bookmark strokeWidth={2.5} className="w-7 h-7 sm:w-8 sm:h-8" />
-          </button>
-        </div>
-      </footer>
     </div>
   );
 };

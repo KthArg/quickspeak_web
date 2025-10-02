@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation'; // Importar usePathname
 import { useTheme } from '../contexts/ThemeContext';
 import { 
   Mic, 
@@ -19,11 +20,11 @@ interface SidebarItemProps {
   text: string;
   active?: boolean;
   expanded: boolean;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 function SidebarItem({ icon, text, active = false, expanded, onClick }: SidebarItemProps) {
-  const { theme } = useTheme(); // Obtiene el tema actual
+  const { theme } = useTheme();
 
   return (
     <li
@@ -47,7 +48,6 @@ function SidebarItem({ icon, text, active = false, expanded, onClick }: SidebarI
         {text}
       </span>
 
-      {/* El Tooltip también cambia de color */}
       {!expanded && (
         <div
           className={`
@@ -67,9 +67,33 @@ function SidebarItem({ icon, text, active = false, expanded, onClick }: SidebarI
 
 // --- Componente Principal del Sidebar (Reactivo al tema) ---
 export default function LeftSidebar({ onLogoutClick }: { onLogoutClick: () => void }) {
-  const { theme } = useTheme(); // Obtiene el tema actual
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [activeLink, setActiveLink] = useState('Speakers');
+  const { theme } = useTheme();
+  const pathname = usePathname(); // Obtener la ruta actual
+  
+  // Leer el estado inicial desde localStorage
+  const [isExpanded, setIsExpanded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebarExpanded');
+      return saved !== null ? JSON.parse(saved) : true;
+    }
+    return true;
+  });
+
+  // Guardar en localStorage cuando cambie el estado
+  const toggleSidebar = () => {
+    setIsExpanded((curr: boolean) => {
+      const newValue = !curr;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sidebarExpanded', JSON.stringify(newValue));
+      }
+      return newValue;
+    });
+  };
+
+  // Función para determinar si un link está activo basándose en la ruta
+  const isActive = (path: string) => {
+    return pathname === path || pathname?.startsWith(path + '/');
+  };
 
   const IconComponent = isExpanded ? ChevronsLeft : ChevronsRight;
 
@@ -89,7 +113,7 @@ export default function LeftSidebar({ onLogoutClick }: { onLogoutClick: () => vo
             Quick Speak
           </h1>
           <button
-            onClick={() => setIsExpanded((curr) => !curr)}
+            onClick={toggleSidebar}
             className={`p-1.5 rounded-lg transition-colors
               ${theme === 'dark' 
                 ? 'bg-gray-700 hover:bg-gray-600' 
@@ -105,50 +129,56 @@ export default function LeftSidebar({ onLogoutClick }: { onLogoutClick: () => vo
 
         {/* Links Principales */}
         <ul className="flex-1 px-3">
-          <SidebarItem
-            icon={<Mic size={26} />}
-            text="Speakers"
-            active={activeLink === 'Speakers'}
-            expanded={isExpanded}
-            onClick={() => setActiveLink('Speakers')}
-          />
-          <SidebarItem
-            icon={<BookText size={26} />}
-            text="Dictionary"
-            active={activeLink === 'Dictionary'}
-            expanded={isExpanded}
-            onClick={() => setActiveLink('Dictionary')}
-          />
-          <SidebarItem
-            icon={<Languages size={26} />}
-            text="Languages"
-            active={activeLink === 'Languages'}
-            expanded={isExpanded}
-            onClick={() => setActiveLink('Languages')}
-          />
-          <SidebarItem
-            icon={<User size={26} />}
-            text="Profile"
-            active={activeLink === 'Profile'}
-            expanded={isExpanded}
-            onClick={() => setActiveLink('Profile')}
-          />
+          <a href="/dashboard/speakers">
+            <SidebarItem
+              icon={<Mic size={26} />}
+              text="Speakers"
+              active={isActive('/dashboard/speakers')}
+              expanded={isExpanded}
+            />
+          </a>
+          <a href="/dashboard/my_dictionaries">
+            <SidebarItem
+              icon={<BookText size={26} />}
+              text="Dictionary"
+              active={isActive('/dashboard/my_dictionaries')}
+              expanded={isExpanded}
+            />
+          </a>
+          <a href="/dashboard/languages">
+            <SidebarItem
+              icon={<Languages size={26} />}
+              text="Languages"
+              active={isActive('/dashboard/languages')}
+              expanded={isExpanded}
+            />
+          </a>
+          <a href="/dashboard/profile">
+            <SidebarItem
+              icon={<User size={26} />}
+              text="Profile"
+              active={isActive('/dashboard/profile')}
+              expanded={isExpanded}
+            />
+          </a>
         </ul>
 
         {/* Links Inferiores */}
         <div className={`p-3 border-t transition-colors ${theme === 'dark' ? 'border-white/10' : 'border-gray-200'}`}>
+          <a href="/dashboard/settings">
             <SidebarItem
-                icon={<Settings size={26} />}
-                text="Settings"
-                expanded={isExpanded}
-                onClick={() => { /* Lógica para ir a Settings */ }}
+              icon={<Settings size={26} />}
+              text="Settings"
+              active={isActive('/dashboard/settings')}
+              expanded={isExpanded}
             />
-             <SidebarItem
-                icon={<LogOut size={26} />}
-                text="Log out"
-                expanded={isExpanded}
-                onClick={onLogoutClick}
-            />
+          </a>
+          <SidebarItem
+            icon={<LogOut size={26} />}
+            text="Log out"
+            expanded={isExpanded}
+            onClick={onLogoutClick}
+          />
         </div>
       </nav>
     </aside>

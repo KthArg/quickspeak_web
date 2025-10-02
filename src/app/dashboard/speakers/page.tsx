@@ -42,9 +42,7 @@ type RecentChat = {
   lastMessage: string;
   timestamp: string;
   unread: boolean;
-  /** Compatibilidad con mocks antiguos */
   colorClass?: string;
-  /** Nuevo: token de color desde el mock */
   color?: ColorToken;
   avatarSeed: string;
   flagEmoji: string;
@@ -57,6 +55,25 @@ type SavedSpeakersResponse = {
 type RecentChatsResponse = {
   recentChats: RecentChat[];
 };
+
+// -------------------- Helper para convertir emoji a código de país --------------------
+function flagEmojiToCountryCode(flagEmoji: string): string {
+  // Los emojis de banderas están compuestos por Regional Indicator Symbols
+  // Extraemos los code points y los convertimos al código ISO del país
+  const codePoints = [...flagEmoji].map(char => char.codePointAt(0)!);
+  const countryCode = codePoints
+    .map(cp => String.fromCharCode(cp - 127397))
+    .join('')
+    .toLowerCase();
+  
+  // Mapeo de códigos de país especiales que pueden tener diferentes códigos en circle-flags
+  const specialMappings: Record<string, string> = {
+    'uk': 'gb',  // Reino Unido usa GB en circle-flags
+    'en': 'gb',  // Inglés genérico -> bandera de GB
+  };
+  
+  return specialMappings[countryCode] || countryCode;
+}
 
 // -------------------- Map token -> gradiente Tailwind --------------------
 const gradientMap: Record<ColorToken, string> = {
@@ -87,20 +104,30 @@ const ChatListItem = ({
 }: RecentChat) => {
   const resolvedGradient =
     colorClass || (color ? gradientMap[color] : "from-gray-500 to-gray-700");
+  
+  const countryCode = flagEmojiToCountryCode(flagEmoji);
 
   return (
     <button
       className={`w-full flex items-center p-2 sm:p-3 rounded-2xl shadow-lg bg-gradient-to-r ${resolvedGradient} transition-transform hover:scale-[1.02]`}
     >
       <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex-shrink-0">
-        <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center text-2xl">
-          {flagEmoji}
+        {/* Bandera circular de fondo */}
+        <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden">
+          <Image
+            src={`https://hatscripts.github.io/circle-flags/flags/${countryCode}.svg`}
+            alt={`${name}'s country flag`}
+            layout="fill"
+            className="object-cover"
+            unoptimized={true}
+          />
         </div>
+        {/* Avatar encima */}
         <Image
           src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${avatarSeed}`}
           alt={`Avatar of ${name}`}
           layout="fill"
-          className="rounded-full"
+          className="rounded-full relative z-10"
           unoptimized={true}
         />
       </div>
@@ -217,8 +244,7 @@ const SpeakersPageV2: NextPage = () => {
           >
             Speakers
           </h1>
-          <button
-            onClick={onSpeakerCatalogClick}
+          <a href="/dashboard/speakers_catalog"
             className={`flex items-center justify-between gap-3 w-full sm:w-auto rounded-full pl-4 pr-2 py-2 sm:pl-6 sm:pr-3 sm:py-2.5 shadow-lg transition-transform hover:scale-105
                 ${theme === "dark" ? "bg-cyan-500" : "bg-cyan-400"}`}
           >
@@ -237,7 +263,7 @@ const SpeakersPageV2: NextPage = () => {
                 }`}
               />
             </div>
-          </button>
+          </a>
         </header>
 
         <section className="flex flex-col items-start gap-4 mt-8 col-start-2">
@@ -260,35 +286,46 @@ const SpeakersPageV2: NextPage = () => {
           </button>
           <div className="w-full overflow-x-auto pb-4 -mb-4">
             <div className="flex items-start gap-4 pt-2 w-max">
-              {savedSpeakers.map((speaker: SavedSpeaker) => (
-                <div
-                  key={speaker.id}
-                  className="flex flex-col items-center gap-2 w-24 sm:w-28 flex-shrink-0"
-                >
-                  <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full cursor-pointer transition-transform hover:scale-105">
-                    <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center text-2xl absolute z-0">
-                      {speaker.flagEmoji}
-                    </div>
-                    <Image
-                      src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${speaker.avatarSeed}`}
-                      alt={`${speaker.name}'s avatar`}
-                      layout="fill"
-                      className="rounded-full relative z-10"
-                      unoptimized={true}
-                    />
-                  </div>
-                  <span
-                    className={`text-md sm:text-lg font-semibold ${
-                      theme === "dark" ? "text-gray-200" : "text-gray-800"
-                    }`}
+              {savedSpeakers.map((speaker: SavedSpeaker) => {
+                const countryCode = flagEmojiToCountryCode(speaker.flagEmoji);
+                return (
+                  <div
+                    key={speaker.id}
+                    className="flex flex-col items-center gap-2 w-24 sm:w-28 flex-shrink-0"
                   >
-                    {speaker.name}
-                  </span>
-                </div>
-              ))}
+                    <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full cursor-pointer transition-transform hover:scale-105">
+                      {/* Bandera circular de fondo */}
+                      <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden">
+                        <Image
+                          src={`https://hatscripts.github.io/circle-flags/flags/${countryCode}.svg`}
+                          alt={`${speaker.name}'s country flag`}
+                          layout="fill"
+                          className="object-cover"
+                          unoptimized={true}
+                        />
+                      </div>
+                      {/* Avatar encima */}
+                      <Image
+                        src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${speaker.avatarSeed}`}
+                        alt={`${speaker.name}'s avatar`}
+                        layout="fill"
+                        className="rounded-full relative z-10"
+                        unoptimized={true}
+                      />
+                    </div>
+                    <span
+                      className={`text-md sm:text-lg font-semibold ${
+                        theme === "dark" ? "text-gray-200" : "text-gray-800"
+                      }`}
+                    >
+                      {speaker.name}
+                    </span>
+                  </div>
+                );
+              })}
               <div className="flex flex-col items-center gap-2 w-24 sm:w-28 flex-shrink-0">
-                <button
-                  onClick={onAddSpeakerClick}
+                <a
+                  href="/dashboard/speakers_catalog"
                   className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center transition-colors
                             ${
                               theme === "dark"
@@ -302,7 +339,7 @@ const SpeakersPageV2: NextPage = () => {
                       theme === "dark" ? "text-gray-400" : "text-gray-600"
                     }`}
                   />
-                </button>
+                </a>
                 <span
                   className={`text-md sm:text-lg font-semibold ${
                     theme === "dark" ? "text-gray-300" : "text-gray-500"
@@ -370,24 +407,6 @@ const SpeakersPageV2: NextPage = () => {
           )}
         </section>
       </main>
-
-      <footer className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50">
-        <div
-          className={`rounded-full flex items-center justify-center gap-12 sm:gap-16 py-3 px-8 sm:py-4 sm:px-12 shadow-2xl ${
-            theme === "dark" ? "bg-cyan-400" : "bg-cyan-400"
-          }`}
-        >
-          <button className="text-black hover:scale-110 transition-transform">
-            <MessageSquare
-              strokeWidth={2.5}
-              className="w-7 h-7 sm:w-8 sm:h-8"
-            />
-          </button>
-          <button className="text-black hover:scale-110 transition-transform">
-            <Bookmark strokeWidth={2.5} className="w-7 h-7 sm:w-8 sm:h-8" />
-          </button>
-        </div>
-      </footer>
     </div>
   );
 };

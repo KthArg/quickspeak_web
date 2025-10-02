@@ -55,7 +55,8 @@ const LanguageIcon = ({
 const AddLanguageCard = () => {
   const { theme } = useTheme();
   return (
-    <button
+    <a
+      href="/dashboard/add_languages"
       className={`w-full max-w-sm sm:max-w-md flex items-center p-3 sm:p-4 rounded-2xl shadow-lg transition-transform hover:scale-[1.02] ${
         theme === "dark" ? "bg-cyan-500/80" : "bg-cyan-400"
       }`}
@@ -86,7 +87,7 @@ const AddLanguageCard = () => {
           Tap here to add another language
         </p>
       </div>
-    </button>
+    </a>
   );
 };
 

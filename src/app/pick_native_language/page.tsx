@@ -60,7 +60,7 @@ const PickNativeLanguagePage: NextPage = () => {
         id: selectedLanguage.id,
         name: selectedLanguage.name,
       });
-      alert(`Native language set: ${selectedLanguage.name}`);
+      window.location.href = "/pick_starting_languages";
     } catch (e: any) {
       alert(e?.message || "No se pudo guardar el idioma.");
     } finally {
@@ -87,12 +87,13 @@ const PickNativeLanguagePage: NextPage = () => {
             : "bg-gradient-to-t from-purple-300/40 via-transparent to-transparent [filter:blur(100px)]"
         }`}
       />
-
-      <ArrowLeft
-        className={`absolute top-6 left-6 md:top-10 md:left-14 w-9 h-9 md:w-11 md:h-11 cursor-pointer z-20 ${
-          theme === "dark" ? "text-white" : "text-gray-600"
-        }`}
-      />
+      <a href="/login">
+        <ArrowLeft
+          className={`absolute top-6 left-6 md:top-10 md:left-14 w-9 h-9 md:w-11 md:h-11 cursor-pointer z-20 ${
+            theme === "dark" ? "text-white" : "text-gray-600"
+          }`}
+        />
+      </a>
 
       <main className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-10 md:gap-12 py-10">
         <header className="w-full flex flex-col items-start text-left gap-2 px-4">

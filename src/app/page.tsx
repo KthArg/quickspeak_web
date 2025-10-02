@@ -84,12 +84,12 @@ const HeroContent = () => {
                     Learn languages for fun
                 </p>
                 <div className="flex flex-col items-start gap-3 mt-4">
-                    <button className="flex items-center gap-3 px-8 py-4 bg-red-500 text-white rounded-2xl font-bold text-2xl shadow-lg transition-transform hover:scale-105">
+                    <a href="/sign_up" className="flex items-center gap-3 px-8 py-4 bg-red-500 text-white rounded-2xl font-bold text-2xl shadow-lg transition-transform hover:scale-105">
                         <span>Sign Up for Free</span>
                         <ArrowRight size={28} />
-                    </button>
+                    </a>
                     <p className={`text-lg ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Already a member? <a href="#" className={`underline ${isDark ? 'hover:text-white' : 'hover:text-black'}`}>Log In</a>
+                        Already a member? <a href="/login" className={`underline ${isDark ? 'hover:text-white' : 'hover:text-black'}`}>Log In</a>
                     </p>
                 </div>
             </div>
