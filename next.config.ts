@@ -1,8 +1,14 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // ...puedes tener otras configuraciones aquí
+
+  output: 'standalone',
+  outputFileTracingRoot: path.join(__dirname),
   
   images: {
+    unoptimized: false,
+
     remotePatterns: [
       {
         protocol: 'https',
