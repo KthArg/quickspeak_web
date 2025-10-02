@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import type { NextPage } from "next";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useTheme } from "@/app/contexts/ThemeContext";
 // Update the import path if apiClient is located elsewhere, for example:
 import { apiClient } from "../../lib/api";
@@ -150,18 +151,24 @@ const SpeakerCard = ({
   isBlurred,
   onMouseEnter,
   onMouseLeave,
+  onSelect,
+  isAdding,
 }: {
   speaker: SpeakerUI;
   isBlurred: boolean;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
+  onSelect: (speaker: SpeakerUI) => void;
+  isAdding: boolean;
 }) => {
   const { theme } = useTheme();
   return (
-    <div
+    <button
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={`rounded-3xl flex shadow-lg overflow-hidden transition-all duration-300 ease-in-out
+      onClick={() => onSelect(speaker)}
+      disabled={isAdding}
+      className={`rounded-3xl flex shadow-lg overflow-hidden transition-all duration-300 ease-in-out cursor-pointer hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50
         ${isBlurred ? "blur-md scale-95" : "scale-100"}
         ${
           theme === "dark"
@@ -210,7 +217,14 @@ const SpeakerCard = ({
           </ul>
         </div>
       </div>
-    </div>
+      {isAdding && (
+        <div className="absolute inset-0 bg-black/20 rounded-3xl flex items-center justify-center">
+          <div className="bg-white rounded-full p-2">
+            <div className="animate-spin h-6 w-6 border-2 border-gray-600 border-t-transparent rounded-full"></div>
+          </div>
+        </div>
+      )}
+    </button>
   );
 };
 
@@ -258,12 +272,14 @@ const LanguageFilter = ({
 // -------------------- Página --------------------
 const SpeakerCatalogPage: NextPage = () => {
   const { theme } = useTheme();
+  const router = useRouter();
 
   const [speakers, setSpeakers] = useState<SpeakerUI[]>([]);
   const [languages, setLanguages] = useState<LanguageUI[]>([]);
   const [hoveredSpeakerId, setHoveredSpeakerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [addingSpeaker, setAddingSpeaker] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -300,6 +316,38 @@ const SpeakerCatalogPage: NextPage = () => {
     );
   }, []);
 
+  const handleSelectSpeaker = useCallback(
+    async (speaker: SpeakerUI) => {
+      try {
+        setAddingSpeaker(speaker.id);
+
+        // Crear el objeto speaker a enviar a la API
+        const speakerToAdd = {
+          id: speaker.id,
+          name: speaker.name,
+          avatarSeed: speaker.avatarSeed,
+          flagEmoji: speaker.flagEmoji,
+        };
+
+        // Llamar a la API para agregar el speaker
+        await apiClient.post("/speakers/add", speakerToAdd);
+
+        // Disparar evento para actualizar la página de speakers
+        window.dispatchEvent(new Event("speakerAdded"));
+        alert("Speaker added successfully!");
+
+        // Navegar de vuelta a speakers
+        router.push("/dashboard/speakers");
+      } catch (error: any) {
+        console.error("Error adding speaker:", error);
+        alert("Error adding speaker: " + (error.message || "Unknown error"));
+      } finally {
+        setAddingSpeaker(null);
+      }
+    },
+    [router]
+  );
+
   const filteredSpeakers = useMemo(() => {
     const active = languages.filter((l) => l.active).map((l) => l.name);
     if (active.length === 0) return speakers;
@@ -321,6 +369,25 @@ const SpeakerCatalogPage: NextPage = () => {
       }`}
     >
       <header className="text-center mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <button
+            onClick={() => router.push("/dashboard/speakers")}
+            className={`px-4 py-2 rounded-full font-semibold transition-colors ${
+              theme === "dark"
+                ? "bg-gray-700 text-white hover:bg-gray-600"
+                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+            }`}
+          >
+            ← Back to Speakers
+          </button>
+          <div
+            className={`text-sm ${
+              theme === "dark" ? "text-gray-300" : "text-gray-600"
+            }`}
+          >
+            Click on a speaker to add them
+          </div>
+        </div>
         <h1
           className={`text-6xl sm:text-7xl md:text-8xl font-bold ${
             theme === "dark" ? "text-cyan-400" : "text-cyan-500"
@@ -350,6 +417,8 @@ const SpeakerCatalogPage: NextPage = () => {
             }
             onMouseEnter={() => setHoveredSpeakerId(speaker.id)}
             onMouseLeave={() => setHoveredSpeakerId(null)}
+            onSelect={handleSelectSpeaker}
+            isAdding={addingSpeaker === speaker.id}
           />
         ))}
       </main>
