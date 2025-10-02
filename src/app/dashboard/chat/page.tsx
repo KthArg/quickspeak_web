@@ -14,7 +14,7 @@ import {
   Send,
   X,
 } from "lucide-react";
-import { apiClient } from "@/app/lib/api"; // <-- usa tu apiClient
+import { apiClient } from "@/app/lib/api";
 
 // -----------------------------
 // Tipos
@@ -52,7 +52,7 @@ type SendMessageResponse = {
 };
 
 // -----------------------------
-// Theme local (no lo metemos al mock)
+// Theme local- Esto no va en el mock!!!!!
 // -----------------------------
 const theme = {
   // Dark
@@ -75,7 +75,7 @@ const theme = {
 
 // -----------------------------
 // Subcomponentes
-// -----------------------------
+// ------------------------------
 const SpeakerProfileModal = ({
   speaker,
   onClose,
@@ -503,7 +503,7 @@ const ChatPage: NextPage = () => {
   const [analyzingMessage, setAnalyzingMessage] =
     React.useState<Message | null>(null);
 
-  const sessionId = "1"; // “fingimos” id constante
+  const sessionId = "1"; // Siempre la misma sesión para el mock
 
   // Carga inicial: GET /chat/session/1
   React.useEffect(() => {
@@ -520,12 +520,11 @@ const ChatPage: NextPage = () => {
         setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Envío: POST /chat/session/1/message
   const handleSendMessage = async (text: string) => {
-    // 1) push optimista del usuario
+    // 1) push del usuario
     const tempId = Date.now();
     const userMsg: Message = { id: tempId, sender: "user", text };
     setMessages((prev) => [...prev, userMsg]);

@@ -5,7 +5,6 @@ import type { NextPage } from "next";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/app/contexts/ThemeContext";
-// Update the import path if apiClient is located elsewhere, for example:
 import { apiClient } from "../../lib/api";
 
 // -------------------- Tipos --------------------

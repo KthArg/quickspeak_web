@@ -5,7 +5,7 @@ import type { NextPage } from "next";
 import Image from "next/image";
 import { useTheme } from "@/app/contexts/ThemeContext";
 import { Languages, X } from "lucide-react";
-import { apiClient } from "@/app/lib/api"; // <— usa tu api.ts
+import { apiClient } from "@/app/lib/api";
 
 // --- Tipos ---
 type Language = {
@@ -14,7 +14,7 @@ type Language = {
   flagUrl: string;
 };
 
-// --- SUB-COMPONENTE: Icono de Idioma ---
+// Sub-componente: Icono de Idioma
 const LanguageIcon = ({
   lang,
   isAdded,
@@ -52,7 +52,7 @@ const LanguageIcon = ({
   );
 };
 
-// --- SUB-COMPONENTE: Tarjeta para Añadir Más ---
+// Sub-componente: Tarjeta "Agregar Más"
 const AddMoreCard = () => {
   const { theme } = useTheme();
   return (
@@ -91,7 +91,7 @@ const AddMoreCard = () => {
   );
 };
 
-// --- SUB-COMPONENTE: Modal de Confirmación ---
+// Sub-componente: Modal de Confirmación
 const ConfirmationModal = ({
   lang,
   onConfirm,
@@ -178,7 +178,7 @@ const ConfirmationModal = ({
 const AddLanguagePage: NextPage = () => {
   const { theme } = useTheme();
 
-  // Estados ahora vienen de la API (no quemados)
+  // Estados que vienen de la API
   const [availableLanguages, setAvailableLanguages] = useState<Language[]>([]);
   const [userLanguages, setUserLanguages] = useState<string[]>([]);
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(
@@ -210,7 +210,7 @@ const AddLanguagePage: NextPage = () => {
   const handleAddLanguage = useCallback(async (lang: Language) => {
     try {
       await apiClient.post("/user/languages/add", { name: lang.name });
-      // Actualizamos estado local (UI inmediata)
+      // Actualiza el estado local para reflejar el cambio
       setUserLanguages((prev) =>
         prev.includes(lang.name) ? prev : [...prev, lang.name]
       );
