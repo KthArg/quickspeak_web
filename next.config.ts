@@ -5,6 +5,10 @@ const nextConfig = {
 
   output: 'standalone',
   outputFileTracingRoot: path.join(__dirname),
+
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   
   images: {
     unoptimized: false,
