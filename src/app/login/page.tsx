@@ -66,6 +66,8 @@ const SignUpPage: NextPage = () => {
         password: formData.password,
       });
 
+      console.log("Login response:", resp);
+
       if ("success" in resp && resp.success) {
         // Despues cuando nos toque hacer el backend, podemos guardar en este punto el token
         // localStorage.setItem("token", resp.token);
@@ -224,7 +226,7 @@ const SignUpPage: NextPage = () => {
                 : "bg-teal-400 text-white hover:bg-teal-500"
             } ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
           >
-            <b>{loading ? "Signing in..." : "Log In"}</b>
+            <b>{loading ? "Loading..." : "Log In"}</b>
             <ArrowRight className="w-6 h-6" />
           </button>
           <div
