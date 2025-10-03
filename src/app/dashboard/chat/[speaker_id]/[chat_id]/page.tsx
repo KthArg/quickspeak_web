@@ -3,6 +3,7 @@
 import React from "react";
 import type { NextPage } from "next";
 import Image from "next/image";
+import { useParams } from "next/navigation";
 import { useTheme } from "@/app/contexts/ThemeContext";
 import {
   Menu,
@@ -490,6 +491,7 @@ const ChatInputBar = ({
 const ChatPage: NextPage = () => {
   const { theme: currentTheme } = useTheme();
   const isDark = currentTheme === "dark";
+  const params = useParams();
 
   const [speaker, setSpeaker] = React.useState<Speaker | null>(null);
   const [messages, setMessages] = React.useState<Message[]>([]);
@@ -500,10 +502,19 @@ const ChatPage: NextPage = () => {
   const [analyzingMessage, setAnalyzingMessage] =
     React.useState<Message | null>(null);
 
-  const sessionId = "1"; // Siempre la misma sesión para el mock
+  // Obtener los parámetros de la URL
+  const speakerId = params.speaker_id as string;
+  const chatId = params.chat_id as string;
+  const sessionId = chatId; // Usar chatId como sessionId
 
-  // Carga inicial: GET /chat/session/1
+  // Carga inicial: GET /chat/session/{chatId}
   React.useEffect(() => {
+    if (!chatId || !speakerId) {
+      setError("Parámetros de chat inválidos");
+      setLoading(false);
+      return;
+    }
+
     (async () => {
       try {
         const data = await apiClient.get<ChatSessionDTO>(
@@ -517,9 +528,9 @@ const ChatPage: NextPage = () => {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [sessionId, chatId, speakerId]);
 
-  // Envío: POST /chat/session/1/message
+  // Envío: POST /chat/session/{chatId}/message
   const handleSendMessage = async (text: string) => {
     // 1) push del usuario
     const tempId = Date.now();

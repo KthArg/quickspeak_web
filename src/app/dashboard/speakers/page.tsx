@@ -46,6 +46,8 @@ type RecentChat = {
   color?: ColorToken;
   avatarSeed: string;
   flagEmoji: string;
+  speakerId?: string;
+  chatId?: string;
 };
 
 type SavedSpeakersResponse = {
@@ -101,8 +103,12 @@ const ChatListItem = ({
   color,
   avatarSeed,
   flagEmoji,
+  speakerId,
+  chatId,
   onChatClick,
-}: RecentChat & { onChatClick: () => void }) => {
+}: RecentChat & {
+  onChatClick: (speakerId?: string, chatId?: string) => void;
+}) => {
   const resolvedGradient =
     colorClass || (color ? gradientMap[color] : "from-gray-500 to-gray-700");
 
@@ -110,7 +116,7 @@ const ChatListItem = ({
 
   return (
     <button
-      onClick={onChatClick}
+      onClick={() => onChatClick(speakerId, chatId)}
       className={`w-full flex items-center p-2 sm:p-3 rounded-2xl shadow-lg bg-gradient-to-r ${resolvedGradient} transition-transform hover:scale-[1.02]`}
     >
       <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex-shrink-0">
@@ -198,9 +204,28 @@ const SpeakersPageV2: NextPage = () => {
     router.push("/dashboard/speakers_catalog");
   }, [router]);
 
-  const onChatClick = useCallback(() => {
-    router.push("/dashboard/chat");
-  }, [router]);
+  const onSavedSpeakerClick = useCallback(
+    (speakerId: string) => {
+      // Crear o encontrar un chat existente para este speaker
+      // Por ahora usaremos el speakerId como chatId para simplicidad
+      const chatId = `chat_${speakerId}`;
+      router.push(`/dashboard/chat/${speakerId}/${chatId}`);
+    },
+    [router]
+  );
+
+  const onChatClick = useCallback(
+    (speakerId?: string, chatId?: string) => {
+      // Si tenemos speakerId y chatId específicos, usarlos
+      if (speakerId && chatId) {
+        router.push(`/dashboard/chat/${speakerId}/${chatId}`);
+      } else {
+        // Fallback para mantener compatibilidad
+        router.push("/dashboard/chat/1/1");
+      }
+    },
+    [router]
+  );
 
   if (loading) {
     return (
@@ -296,8 +321,9 @@ const SpeakersPageV2: NextPage = () => {
               {savedSpeakers.map((speaker: SavedSpeaker) => {
                 const countryCode = flagEmojiToCountryCode(speaker.flagEmoji);
                 return (
-                  <div
+                  <button
                     key={speaker.id}
+                    onClick={() => onSavedSpeakerClick(speaker.id)}
                     className="flex flex-col items-center gap-2 w-24 sm:w-28 flex-shrink-0"
                   >
                     <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full cursor-pointer transition-transform hover:scale-105">
@@ -327,7 +353,7 @@ const SpeakersPageV2: NextPage = () => {
                     >
                       {speaker.name}
                     </span>
-                  </div>
+                  </button>
                 );
               })}
               <div className="flex flex-col items-center gap-2 w-24 sm:w-28 flex-shrink-0">
