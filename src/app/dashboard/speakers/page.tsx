@@ -60,18 +60,18 @@ type RecentChatsResponse = {
 function flagEmojiToCountryCode(flagEmoji: string): string {
   // Los emojis de banderas están compuestos por Regional Indicator Symbols
   // Extraemos los code points y los convertimos al código ISO del país
-  const codePoints = [...flagEmoji].map(char => char.codePointAt(0)!);
+  const codePoints = [...flagEmoji].map((char) => char.codePointAt(0)!);
   const countryCode = codePoints
-    .map(cp => String.fromCharCode(cp - 127397))
-    .join('')
+    .map((cp) => String.fromCharCode(cp - 127397))
+    .join("")
     .toLowerCase();
-  
+
   // Mapeo de códigos de país especiales que pueden tener diferentes códigos en circle-flags
   const specialMappings: Record<string, string> = {
-    'uk': 'gb',  // Reino Unido usa GB en circle-flags
-    'en': 'gb',  // Inglés genérico -> bandera de GB
+    uk: "gb", // Reino Unido usa GB en circle-flags
+    en: "gb", // Inglés genérico -> bandera de GB
   };
-  
+
   return specialMappings[countryCode] || countryCode;
 }
 
@@ -101,14 +101,16 @@ const ChatListItem = ({
   color,
   avatarSeed,
   flagEmoji,
-}: RecentChat) => {
+  onChatClick,
+}: RecentChat & { onChatClick: () => void }) => {
   const resolvedGradient =
     colorClass || (color ? gradientMap[color] : "from-gray-500 to-gray-700");
-  
+
   const countryCode = flagEmojiToCountryCode(flagEmoji);
 
   return (
     <button
+      onClick={onChatClick}
       className={`w-full flex items-center p-2 sm:p-3 rounded-2xl shadow-lg bg-gradient-to-r ${resolvedGradient} transition-transform hover:scale-[1.02]`}
     >
       <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex-shrink-0">
@@ -196,6 +198,10 @@ const SpeakersPageV2: NextPage = () => {
     router.push("/dashboard/speakers_catalog");
   }, [router]);
 
+  const onChatClick = useCallback(() => {
+    router.push("/dashboard/chat");
+  }, [router]);
+
   if (loading) {
     return (
       <div
@@ -244,7 +250,8 @@ const SpeakersPageV2: NextPage = () => {
           >
             Speakers
           </h1>
-          <a href="/dashboard/speakers_catalog"
+          <a
+            href="/dashboard/speakers_catalog"
             className={`flex items-center justify-between gap-3 w-full sm:w-auto rounded-full pl-4 pr-2 py-2 sm:pl-6 sm:pr-3 sm:py-2.5 shadow-lg transition-transform hover:scale-105
                 ${theme === "dark" ? "bg-cyan-500" : "bg-cyan-400"}`}
           >
@@ -361,7 +368,11 @@ const SpeakersPageV2: NextPage = () => {
           {recentChats.length > 0 ? (
             <div className="w-full flex flex-col gap-3">
               {recentChats.map((chat: RecentChat) => (
-                <ChatListItem key={chat.id} {...chat} />
+                <ChatListItem
+                  key={chat.id}
+                  {...chat}
+                  onChatClick={onChatClick}
+                />
               ))}
             </div>
           ) : (

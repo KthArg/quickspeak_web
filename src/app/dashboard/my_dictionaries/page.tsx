@@ -3,6 +3,7 @@
 import type { NextPage } from "next";
 import { useEffect, useMemo, useState } from "react";
 import { useTheme } from "@/app/contexts/ThemeContext";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Languages, MessageSquare, Bookmark } from "lucide-react";
 import { apiClient } from "@/app/lib/api";
@@ -35,12 +36,15 @@ const languageColor = (lang: string): string => {
 const DictionaryCard = ({
   dictionary,
   theme,
+  onClick,
 }: {
   dictionary: DictionaryItem & { color: string };
   theme: "light" | "dark";
+  onClick: () => void;
 }) => {
   return (
     <button
+      onClick={onClick}
       className={`w-full flex items-center p-3 sm:p-4 rounded-2xl shadow-lg transition-transform hover:scale-[1.02] ${dictionary.color}`}
     >
       <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full flex-shrink-0 bg-white/20 p-1">
@@ -73,6 +77,7 @@ const DictionaryCard = ({
 
 const DictionaryPage: NextPage = () => {
   const { theme } = useTheme();
+  const router = useRouter();
   const [data, setData] = useState<DictionaryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,6 +108,11 @@ const DictionaryPage: NextPage = () => {
   const decorated = useMemo(() => {
     return data.map((d) => ({ ...d, color: languageColor(d.language) }));
   }, [data]);
+
+  // función para navegar al diccionario
+  const handleDictionaryClick = () => {
+    router.push("/dashboard/dictionary");
+  };
 
   return (
     <div
@@ -162,6 +172,7 @@ const DictionaryPage: NextPage = () => {
                 key={dict.id}
                 dictionary={dict}
                 theme={theme as "light" | "dark"}
+                onClick={handleDictionaryClick}
               />
             ))}
 
