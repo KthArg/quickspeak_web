@@ -7,12 +7,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('🔍 Body recibido:', body); // Debug
     
-    const data = await apiClient.post('/languages/native', body);
+    const data = await apiClient.post('/languages/make-native', body);
     console.log('✅ Respuesta exitosa:', data); // Debug
     
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error('❌ Error en /api/languages/native:', error); // Debug detallado
+    console.error('❌ Error en /languages/make-native:', error); // Debug detallado
     console.error('Error message:', error.message); // Debug mensaje
     
     return NextResponse.json(
