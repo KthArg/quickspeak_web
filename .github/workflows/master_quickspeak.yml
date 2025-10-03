@@ -32,7 +32,8 @@ jobs:
         env:
           NODE_ENV: production
           # Agrega tus variables NEXT_PUBLIC_* aquí:
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_PUBLIC_API_KEY: ${{ secrets.NEXT_PUBLIC_API_KEY }}
           # NEXT_PUBLIC_OTRA_VAR: ${{ secrets.NEXT_PUBLIC_OTRA_VAR }}
 
       - name: Copy static files to standalone
@@ -75,3 +76,4 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: Production
           package: .
+
