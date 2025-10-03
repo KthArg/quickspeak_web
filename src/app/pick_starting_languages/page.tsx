@@ -29,9 +29,8 @@ const PickLanguagesToLearnPage: NextPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await apiClient.get<{ languages: Language[] }>(
-          "/languages/starting"
-        );
+        const response = await fetch('/api/languages/starting');
+        const data = await response.json();
         if (mounted) setLanguages(data.languages ?? []);
       } catch (e: any) {
         if (mounted) setError(e?.message ?? "Error cargando idiomas");
@@ -61,10 +60,12 @@ const PickLanguagesToLearnPage: NextPage = () => {
       setSaving(true);
       setError(null);
       // POST al mock /selections/languages
-      const res = await apiClient.post<{
-        success: boolean;
-        selection: { id: number; selected: string[] };
-      }>("/selections/starting/languages", { selected: selectedNames });
+      const response = await fetch('/api/selections/starting-languages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selected: selectedNames })
+      });
+      const res = await response.json();
       window.location.href = "/dashboard/speakers";
     } catch (e: any) {
       setError(e?.message ?? "Error al guardar selección");

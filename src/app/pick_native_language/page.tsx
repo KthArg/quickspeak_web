@@ -31,9 +31,8 @@ const PickNativeLanguagePage: NextPage = () => {
     (async () => {
       try {
         setLoading(true);
-        const data = await apiClient.get<{ languages: Language[] }>(
-          "/languages/catalog/select_native"
-        );
+        const response = await fetch('/api/languages/select-native');
+        const data = await response.json();
         if (!mounted) return;
         setLanguages(data.languages || []);
         // Pre-selecciona el primero 
@@ -56,9 +55,13 @@ const PickNativeLanguagePage: NextPage = () => {
     try {
       setSaving(true);
       // Post al mock 
-      await apiClient.post("/make-native-language", {
-        id: selectedLanguage.id,
-        name: selectedLanguage.name,
+      await fetch('/api/languages/native', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: selectedLanguage.id,
+          name: selectedLanguage.name
+        })
       });
       window.location.href = "/pick_starting_languages";
     } catch (e: any) {

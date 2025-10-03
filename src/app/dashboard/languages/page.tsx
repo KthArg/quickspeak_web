@@ -229,10 +229,8 @@ const LanguagesPage: NextPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await apiClient.get<{
-          languages: Language[];
-          nativeLanguageId: number;
-        }>("/languages/catalog");
+        const response = await fetch('/api/languages/catalog');
+        const data = await response.json();
         setLanguages(data.languages);
         setNativeLanguageId(data.nativeLanguageId);
       } catch (e: any) {
@@ -244,10 +242,12 @@ const LanguagesPage: NextPage = () => {
   }, []);
 
   const handleMakeNative = useCallback(async (id: number) => {
-    const data = await apiClient.post<{
-      success: boolean;
-      nativeLanguageId: number;
-    }>(`/languages/native`, { id });
+    const response = await fetch('/api/languages/native', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    const data = await response.json();
     if (data.success) {
       setNativeLanguageId(data.nativeLanguageId);
       setSelectedLanguage(null);
@@ -255,10 +255,12 @@ const LanguagesPage: NextPage = () => {
   }, []);
 
   const handleRemoveLanguage = useCallback(async (id: number) => {
-    const data = await apiClient.post<{ success: boolean }>(
-      `/languages/remove`,
-      { id }
-    );
+    const response = await fetch('/api/languages/remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    const data = await response.json();
     if (data.success) {
       setLanguages((prev) => prev.filter((l) => l.id !== id));
       setSelectedLanguage(null);

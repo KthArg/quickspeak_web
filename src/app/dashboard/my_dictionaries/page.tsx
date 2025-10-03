@@ -6,7 +6,6 @@ import { useTheme } from "@/app/contexts/ThemeContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Languages, MessageSquare, Bookmark } from "lucide-react";
-import { apiClient } from "@/app/lib/api";
 
 // ===== Tipos de respuesta del backend =====
 type DictionaryItem = {
@@ -87,9 +86,8 @@ const DictionaryPage: NextPage = () => {
     let isMounted = true;
     (async () => {
       try {
-        const res = await apiClient.get<DictionariesResponse>(
-          "/dictionaries/catalog"
-        );
+        const response = await fetch('/api/dictionary/catalog');
+        const res = await response.json();
         if (!isMounted) return;
         setData(res.dictionaries ?? []);
       } catch (e: any) {

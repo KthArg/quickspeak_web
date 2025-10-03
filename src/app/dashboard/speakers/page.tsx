@@ -168,10 +168,13 @@ const SpeakersPageV2: NextPage = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [savedSpeakersResponse, recentChatsResponse] = await Promise.all([
-          apiClient.get<SavedSpeakersResponse>("/speakers/saved"),
-          apiClient.get<RecentChatsResponse>("/chats/recent"),
+        const [savedSpeakersRes, recentChatsRes] = await Promise.all([
+          fetch('/api/speakers/saved'),
+          fetch('/api/chats/recent')
         ]);
+        
+        const savedSpeakersResponse = await savedSpeakersRes.json();
+        const recentChatsResponse = await recentChatsRes.json();
 
         setSavedSpeakers(savedSpeakersResponse.savedSpeakers);
         setRecentChats(recentChatsResponse.recentChats);

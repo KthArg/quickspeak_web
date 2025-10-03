@@ -58,11 +58,15 @@ const SignUpPage: NextPage = () => {
     try {
       setSubmitting(true);
 
-      const data = await apiClient.post<SignUpResponse>("/auth/signup", {
-        email: formData.email,
-        password: formData.password,
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
       });
-
+      const data = await response.json();
       if (data.ok) {
         window.location.href = data.next || "/pick_native_language";
       } else {

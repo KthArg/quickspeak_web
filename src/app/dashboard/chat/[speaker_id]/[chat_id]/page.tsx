@@ -15,7 +15,6 @@ import {
   Send,
   X,
 } from "lucide-react";
-import { apiClient } from "@/app/lib/api";
 
 // -----------------------------
 // Tipos
@@ -517,9 +516,8 @@ const ChatPage: NextPage = () => {
 
     (async () => {
       try {
-        const data = await apiClient.get<ChatSessionDTO>(
-          `/chat/session/${sessionId}`
-        );
+        const response = await fetch(`/api/chat/session/${sessionId}`);
+        const data = await response.json();
         setSpeaker(data.speaker);
         setMessages(data.messages);
       } catch (e: any) {
@@ -539,10 +537,12 @@ const ChatPage: NextPage = () => {
 
     try {
       const body: SendMessageRequest = { text };
-      const resp = await apiClient.post<SendMessageResponse>(
-        `/chat/session/${sessionId}/message`,
-        body
-      ); //Al segundo mensaje enviado da error, porque se envía con el mismo id
+      const response = await fetch(`/api/chat/session/${sessionId}/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const resp = await response.json();
 
       if (resp?.assistantReply) {
         const aiMsg: Message = {

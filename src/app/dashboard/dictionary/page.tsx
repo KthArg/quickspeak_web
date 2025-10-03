@@ -222,9 +222,8 @@ const DictionaryDetailPage: NextPage = () => {
     let alive = true;
     (async () => {
       try {
-        const { words } = await apiClient.get<WordsResponse>(
-          "/dictionary/words"
-        );
+        const response = await fetch('/api/dictionary/words');
+        const { words } = await response.json();
         if (!alive) return;
 
         const toUI = (w: WordDTO): WordUI => ({
@@ -258,8 +257,10 @@ const DictionaryDetailPage: NextPage = () => {
 
   const handleUpdateAll = useCallback(async () => {
     try {
-      await apiClient.post("/dictionary/words/update-translations", {
-        all: true,
+      await fetch('/api/dictionary/words/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true })
       });
       setDictionaryWords((prev) =>
         prev.map((w) => ({ ...w, translated: true }))
@@ -276,7 +277,11 @@ const DictionaryDetailPage: NextPage = () => {
   const handleForget = useCallback(async (id: number) => {
     try {
       setForgettingId(id);
-      await apiClient.post(`/dictionary/words/${id}/forget`, {});
+        await fetch(`/api/dictionary/words/${id}/forget`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
       // Quitar la palabra de la lista
       setDictionaryWords((prev) => prev.filter((w) => w.id !== id));
       // Cerrar modal si es la seleccionada

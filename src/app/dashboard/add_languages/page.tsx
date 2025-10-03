@@ -5,7 +5,6 @@ import type { NextPage } from "next";
 import Image from "next/image";
 import { useTheme } from "@/app/contexts/ThemeContext";
 import { Languages, X } from "lucide-react";
-import { apiClient } from "@/app/lib/api";
 
 // --- Tipos ---
 type Language = {
@@ -150,17 +149,15 @@ const AddLanguagePage: NextPage = () => {
   useEffect(() => {
     (async () => {
       try {
-        const catalog = await apiClient.get<{ languages: Language[] }>(
-          "/languages/full/catalog"
-        );
+        const catalogResponse = await fetch('/api/languages/full-catalog');
+        const catalog = await catalogResponse.json();
         setAvailableLanguages(catalog.languages);
       } catch (e) {
         console.error("Error cargando catálogo de idiomas", e);
       }
       try {
-        const me = await apiClient.get<{ userLanguages: string[] }>(
-          "/user/languages"
-        );
+        const meResponse = await fetch('/api/user/languages');
+        const me = await meResponse.json();
         setUserLanguages(me.userLanguages);
       } catch (e) {
         console.error("Error cargando idiomas del usuario", e);
@@ -170,7 +167,11 @@ const AddLanguagePage: NextPage = () => {
 
   const handleAddLanguage = useCallback(async (lang: Language) => {
     try {
-      await apiClient.post("/user/languages/add", { name: lang.name });
+      await fetch('/api/user/languages/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: lang.name })
+      });
       // Actualiza el estado local para reflejar el cambio
       setUserLanguages((prev) =>
         prev.includes(lang.name) ? prev : [...prev, lang.name]

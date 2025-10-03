@@ -284,12 +284,12 @@ const SpeakerCatalogPage: NextPage = () => {
     let alive = true;
     (async () => {
       try {
-        const { speakers } = await apiClient.get<SpeakersResponse>(
-          "/speakers/catalog"
-        );
+        const response = await fetch('/api/speakers/catalog');
+        const data: SpeakersResponse = await response.json();
+      
         if (!alive) return;
 
-        const speakersUI: SpeakerUI[] = speakers.map((s) => ({
+        const speakersUI: SpeakerUI[] = data.speakers.map((s: SpeakerDTO) => ({
           ...s,
           colorClasses: colorMap[s.color] ?? colorMap.teal,
         }));
@@ -329,7 +329,11 @@ const SpeakerCatalogPage: NextPage = () => {
         };
 
         // Llamar a la API para agregar el speaker
-        await apiClient.post("/speakers/add", speakerToAdd);
+        await fetch('/api/speakers/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(speakerToAdd)
+        });
 
         // Disparar evento para actualizar la página de speakers
         window.dispatchEvent(new Event("speakerAdded"));

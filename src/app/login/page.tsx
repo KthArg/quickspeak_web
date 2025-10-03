@@ -61,10 +61,15 @@ const SignUpPage: NextPage = () => {
       setLoading(true);
 
       // Llamada al mock
-      const resp = await apiClient.post<LoginResponse>("/auth/login", {
+      const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         email: formData.email,
-        password: formData.password,
-      });
+        password: formData.password
+      })
+    });
+    const resp = await response.json();
 
       console.log("Login response:", resp);
 

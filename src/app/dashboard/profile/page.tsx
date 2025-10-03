@@ -59,7 +59,8 @@ const ProfilePage: NextPage = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const data = await apiClient.get<ProfileDTO>("/profile/basic");
+        const response = await fetch('/api/profile/basic');
+        const data = await response.json();
         setUserData(data);
       } catch (err: any) {
         setErrorMsg(err?.message ?? "Error al cargar el perfil");
