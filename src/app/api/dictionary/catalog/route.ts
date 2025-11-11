@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const data = await apiClient.get('/dictionaries/catalog');
+    const data = await apiClient.get('/conversation/dictionary/catalog');
     return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json(

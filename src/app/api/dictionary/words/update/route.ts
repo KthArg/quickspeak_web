@@ -2,10 +2,11 @@
 import { apiClient } from '@/app/lib/api';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const data = await apiClient.post('/dictionary/words/update-translations', body);
+    const { id } = body;
+    const data = await apiClient.put(`/conversation/dictionary/words/${id}`, body);
     return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json(

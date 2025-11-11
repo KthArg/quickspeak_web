@@ -149,14 +149,14 @@ const AddLanguagePage: NextPage = () => {
   useEffect(() => {
     (async () => {
       try {
-        const catalogResponse = await fetch('/api/languages/full-catalog');
+        const catalogResponse = await fetch("/api/languages/full-catalog");
         const catalog = await catalogResponse.json();
         setAvailableLanguages(catalog.languages);
       } catch (e) {
         console.error("Error cargando catálogo de idiomas", e);
       }
       try {
-        const meResponse = await fetch('/api/user/languages');
+        const meResponse = await fetch("/api/user/languages");
         const me = await meResponse.json();
         setUserLanguages(me.userLanguages);
       } catch (e) {
@@ -167,10 +167,10 @@ const AddLanguagePage: NextPage = () => {
 
   const handleAddLanguage = useCallback(async (lang: Language) => {
     try {
-      await fetch('/api/user/languages/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: lang.name })
+      await fetch("/api/user/languages/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: lang.name }),
       });
       // Actualiza el estado local para reflejar el cambio
       setUserLanguages((prev) =>
