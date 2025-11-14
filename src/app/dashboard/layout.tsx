@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
-import LeftSidebar from "../components/leftSideBar";
-import { useTheme } from "../contexts/ThemeContext";
-import { Menu, X } from "lucide-react";
+import React, { useState } from 'react';
+import LeftSidebar from '../components/leftSideBar';
+import { useTheme } from '../contexts/ThemeContext';
+import { Menu, X } from 'lucide-react';
+import { tokenManager } from '../lib/api';
 
 // --- SUB-COMPONENTE: Modal de Confirmación de Logout (con Light Mode) ---
 const LogoutConfirmationModal = ({
@@ -93,9 +94,10 @@ export default function DashboardLayout({
 
   const handleLogoutConfirm = () => {
     setIsLogoutModalOpen(false);
-    //Limpiar el Token luego de hacer logout
-    localStorage.removeItem("token");
-    window.location.href = "/";
+    // Eliminar el token JWT de localStorage
+    tokenManager.removeToken();
+    console.log("Token JWT eliminado - Sesión cerrada");
+    window.location.href = '/';
   };
 
   return (
