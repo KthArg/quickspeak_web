@@ -14,55 +14,18 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
 
-      # ✅ NUEVO: Instalar dependencias
-      - name: Install dependencies
-        run: npm ci
-
-      # ✅ NUEVO: Build de Next.js (genera .next/standalone)
-      - name: Build Next.js app
-        run: npm run build
-
-      # ✅ NUEVO: Verificar que standalone se generó
-      - name: Verify standalone output
-        run: |
-          echo "Verificando que .next/standalone existe..."
-          if [ ! -d ".next/standalone" ]; then
-            echo "❌ ERROR: .next/standalone no se generó"
-            exit 1
-          fi
-          echo "✅ Standalone generado correctamente"
-          ls -la .next/standalone/
-
-      # ✅ NUEVO: Copiar archivos necesarios al standalone
-      - name: Copy necessary files to standalone
-        run: |
-          # Copiar archivos estáticos públicos
-          if [ -d "public" ]; then
-            cp -r public .next/standalone/
-          fi
-          
-          # Copiar archivos estáticos de .next
-          if [ -d ".next/static" ]; then
-            mkdir -p .next/standalone/.next
-            cp -r .next/static .next/standalone/.next/
-          fi
-          
-          echo "✅ Archivos copiados correctamente"
-
-      # ✅ Subir SOLO el standalone (no todo el proyecto)
-      - name: Upload artifact for deployment
+      - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .next/standalone/
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
@@ -91,3 +54,4 @@ jobs:
           app-name: 'quickspeak-web'
           slot-name: 'Production'
           package: .
+
