@@ -10,7 +10,7 @@ export async function POST(
     const { sessionId } = await params;
     const body = await request.json();
     const data = await apiClient.post(
-      `/chat/session/${sessionId}/message`,
+      `/conversation/chat/session/${sessionId}/message`,
       body
     );
     return NextResponse.json(data);

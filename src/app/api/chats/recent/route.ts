@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const data = await apiClient.get('/chats/recent');
+    const data = await apiClient.get('/conversation/chats/recent');
     return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json(

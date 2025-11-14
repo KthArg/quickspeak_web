@@ -58,16 +58,21 @@ const SignUpPage: NextPage = () => {
     try {
       setSubmitting(true);
 
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: formData.email,
-          password: formData.password
-        })
+          password: formData.password,
+        }),
       });
       const data = await response.json();
       if (data.ok) {
+        //Guardar el Token en local storage si es que viene
+        if (data.token) {
+          localStorage.setItem("token", data.token);
+        }
+
         window.location.href = data.next || "/pick_native_language";
       } else {
         setServerError(data.message || "Unexpected error");

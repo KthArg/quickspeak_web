@@ -61,19 +61,23 @@ const SignUpPage: NextPage = () => {
       setLoading(true);
 
       // Llamada al mock
-      const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: formData.email,
-        password: formData.password
-      })
-    });
-    const resp = await response.json();
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+      const resp = await response.json();
 
       console.log("Login response:", resp);
 
       if ("success" in resp && resp.success) {
+        // Guarda el token en local storage
+        if (resp.token) {
+          localStorage.setItem("token", resp.token);
+        }
         // Despues cuando nos toque hacer el backend, podemos guardar en este punto el token
         // localStorage.setItem("token", resp.token);
         window.location.href = "/dashboard/speakers";

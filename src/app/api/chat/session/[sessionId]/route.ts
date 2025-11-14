@@ -8,7 +8,7 @@ export async function GET(
   try {
     // ✅ Await params primero
     const { sessionId } = await params;
-    const data = await apiClient.get(`/chat/session/${sessionId}`);
+    const data = await apiClient.get(`/conversation/chat/session/${sessionId}`);
     return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json(

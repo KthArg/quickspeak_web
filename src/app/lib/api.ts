@@ -1,6 +1,6 @@
 // app/lib/api.ts
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "https://apiprojectmanagement.azure-api.net";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "https://apim-quick-speak.azure-api.net";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
 type ApiError = {
@@ -44,9 +44,20 @@ function buildHeaders(extra?: Record<string, string>) {
     "Content-Type": "application/json",
     ...(extra || {}),
   };
+  
+  // Revisar la suscripción para comprar su es igual a la subscription key de APIM
   if (API_KEY) {
     headers["Ocp-Apim-Subscription-Key"] = API_KEY;
   }
+  
+  // JWT token desde localStorage
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+  
   return headers;
 }
 
@@ -66,6 +77,25 @@ export const apiClient = {
       method: "POST",
       headers: buildHeaders(),
       body: JSON.stringify(body),
+    });
+    return handleResponse<T>(res, url);
+  },
+
+  async put<T>(endpoint: string, body: any): Promise<T> {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const res = await fetch(url, {
+      method: "PUT",
+      headers: buildHeaders(),
+      body: JSON.stringify(body),
+    });
+    return handleResponse<T>(res, url);
+  },
+
+  async delete<T>(endpoint: string): Promise<T> {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const res = await fetch(url, {
+      method: "DELETE",
+      headers: buildHeaders(),
     });
     return handleResponse<T>(res, url);
   },
