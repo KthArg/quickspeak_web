@@ -6,7 +6,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { RiVoiceprintFill } from "react-icons/ri";
-import { apiClient } from "@/app/lib/api";
+import { apiClient, tokenManager } from "@/app/lib/api";
 
 type LoginResponse =
   | {
@@ -74,12 +74,10 @@ const SignUpPage: NextPage = () => {
       console.log("Login response:", resp);
 
       if ("success" in resp && resp.success) {
-        // Guarda el token en local storage
+        // Guardar el token JWT en localStorage
         if (resp.token) {
-          localStorage.setItem("token", resp.token);
+          tokenManager.saveToken(resp.token);
         }
-        // Despues cuando nos toque hacer el backend, podemos guardar en este punto el token
-        // localStorage.setItem("token", resp.token);
         window.location.href = "/dashboard/speakers";
       } else {
         // Cuando el mock manda success:false (p.ej. 400, 401 ya son interceptados por apiClient y vienen como throw)
@@ -280,10 +278,10 @@ const SignUpPage: NextPage = () => {
             ></div>
           </div>
           <div className="w-full flex flex-col sm:flex-row justify-center items-center gap-4">
-            {/* Botón Google (si usas Azure Static Web Apps auth flow, déjalo como lo tienes) */}
+            {/* Botón Google (Azure EasyAuth con callback al microservicio) */}
             <a
-              href="/.auth/login/google?post_login_redirect_uri=/dashboard/speakers"
-              className={`w-full sm:w-auto flex-1 h-16 rounded-full flex justify-center items-center transition-colors ring-4 ring-offset-2 
+              href="/.auth/login/google?post_login_redirect_uri=/auth/callback"
+              className={`w-full sm:w-auto flex-1 h-16 rounded-full flex justify-center items-center transition-colors ring-4 ring-offset-2
                 ${
                   isDark
                     ? "bg-white hover:bg-gray-200 ring-offset-transparent ring-[#3498db]"

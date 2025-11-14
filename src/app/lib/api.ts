@@ -3,9 +3,52 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "https://apim-quick-speak.azure-api.net";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
+// Clave para almacenar el token JWT en localStorage
+const TOKEN_STORAGE_KEY = "authToken";
+
 type ApiError = {
   success?: boolean;
   message?: string;
+};
+
+/**
+ * Manejo de tokens JWT en localStorage
+ */
+export const tokenManager = {
+  /**
+   * Guarda el token JWT en localStorage
+   */
+  saveToken: (token: string): void => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(TOKEN_STORAGE_KEY, token);
+    }
+  },
+
+  /**
+   * Obtiene el token JWT desde localStorage
+   */
+  getToken: (): string | null => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(TOKEN_STORAGE_KEY);
+    }
+    return null;
+  },
+
+  /**
+   * Elimina el token JWT de localStorage
+   */
+  removeToken: (): void => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+    }
+  },
+
+  /**
+   * Verifica si existe un token
+   */
+  hasToken: (): boolean => {
+    return tokenManager.getToken() !== null;
+  },
 };
 
 async function handleResponse<T>(res: Response, url: string): Promise<T> {
@@ -29,6 +72,22 @@ async function handleResponse<T>(res: Response, url: string): Promise<T> {
     }
   }
 
+  // Manejar errores de autenticación
+  if (res.status === 401 || res.status === 403) {
+    // Token expirado o inválido - limpiar y redirigir a login
+    tokenManager.removeToken();
+
+    // Solo redirigir si estamos en el navegador
+    if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
+      window.location.href = "/login";
+    }
+
+    const msg =
+      (data && (data as ApiError).message) ||
+      "Sesión expirada. Por favor inicia sesión nuevamente.";
+    throw new Error(msg);
+  }
+
   if (!res.ok) {
     const msg =
       (data && (data as ApiError).message) ||
@@ -44,20 +103,18 @@ function buildHeaders(extra?: Record<string, string>) {
     "Content-Type": "application/json",
     ...(extra || {}),
   };
-  
-  // Revisar la suscripción para comprar su es igual a la subscription key de APIM
+
+  // Agregar API Key si está configurada
   if (API_KEY) {
     headers["Ocp-Apim-Subscription-Key"] = API_KEY;
   }
-  
-  // JWT token desde localStorage
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token');
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
+
+  // Agregar JWT token si existe en localStorage
+  const token = tokenManager.getToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
   }
-  
+
   return headers;
 }
 
@@ -96,6 +153,16 @@ export const apiClient = {
     const res = await fetch(url, {
       method: "DELETE",
       headers: buildHeaders(),
+    });
+    return handleResponse<T>(res, url);
+  },
+
+  async patch<T>(endpoint: string, body: any): Promise<T> {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: buildHeaders(),
+      body: JSON.stringify(body),
     });
     return handleResponse<T>(res, url);
   },
