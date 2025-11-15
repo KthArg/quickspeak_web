@@ -1,18 +1,27 @@
 // app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-const USER_SERVICE_URL = process.env.NEXT_PUBLIC_USER_SERVICE_URL || 'http://localhost:8082';
+const APIM_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://apim-quick-speak.azure-api.net';
+const APIM_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Llamar al microservicio de autenticación
-    const response = await fetch(`${USER_SERVICE_URL}/api/v1/auth/login`, {
+    // Preparar headers para APIM
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // Agregar subscription key si está configurada
+    if (APIM_KEY) {
+      headers['Ocp-Apim-Subscription-Key'] = APIM_KEY;
+    }
+
+    // Llamar al microservicio de autenticación a través de APIM
+    const response = await fetch(`${APIM_URL}/users/api/v1/auth/login`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({
         email: body.email,
         password: body.password,
