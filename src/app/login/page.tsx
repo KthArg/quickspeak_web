@@ -13,6 +13,7 @@ type LoginResponse =
       success: true;
       user: { email: string; name: string };
       token: string;
+      userId: number;
       expiresIn: number;
     }
   | {
@@ -74,9 +75,9 @@ const SignUpPage: NextPage = () => {
       console.log("Login response:", resp);
 
       if ("success" in resp && resp.success) {
-        // Guardar el token JWT en localStorage
+        // Guardar el token JWT y userId en localStorage
         if (resp.token) {
-          tokenManager.saveToken(resp.token);
+          tokenManager.saveToken(resp.token, resp.userId);
         }
         window.location.href = "/dashboard/speakers";
       } else {

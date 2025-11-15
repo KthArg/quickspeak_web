@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tokenManager } from "@/app/lib/api";
 
-const USER_SERVICE_URL = process.env.NEXT_PUBLIC_USER_SERVICE_URL || 'http://localhost:8082';
+const APIM_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://apim-quick-speak.azure-api.net';
+const APIM_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
 /**
  * Página de callback para autenticación OAuth (Google vía Azure EasyAuth)
@@ -67,12 +68,18 @@ export default function AuthCallbackPage() {
         lastName = 'User';
       }
 
-      // 3. Enviar información al microservicio
-      const oauthResponse = await fetch(`${USER_SERVICE_URL}/api/v1/auth/oauth`, {
+      // 3. Enviar información al microservicio a través de APIM
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (APIM_KEY) {
+        headers['Ocp-Apim-Subscription-Key'] = APIM_KEY;
+      }
+
+      const oauthResponse = await fetch(`${APIM_URL}/users/api/v1/auth/oauth`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({
           email: easyAuthData.email,
           firstName: firstName,
@@ -89,10 +96,10 @@ export default function AuthCallbackPage() {
 
       const userData = await oauthResponse.json();
 
-      // 4. Guardar token JWT
+      // 4. Guardar token JWT y userId
       if (userData.token) {
-        tokenManager.saveToken(userData.token);
-        console.log('JWT token saved successfully');
+        tokenManager.saveToken(userData.token, userData.userId);
+        console.log('JWT token and userId saved successfully');
       } else {
         throw new Error('No token received from authentication service');
       }

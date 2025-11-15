@@ -43,10 +43,11 @@ export async function POST(request: NextRequest) {
 
     // Transformar la respuesta del microservicio al formato esperado por el frontend
     // Microservicio retorna: { token, userId, email, firstName, lastName }
-    // Frontend espera: { success: true, user: {...}, token, expiresIn }
+    // Frontend espera: { success: true, user: {...}, token, userId, expiresIn }
     return NextResponse.json({
       success: true,
       token: data.token,
+      userId: data.userId,
       user: {
         email: data.email,
         name: `${data.firstName} ${data.lastName}`,
