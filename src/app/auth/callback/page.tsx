@@ -14,7 +14,7 @@ const APIM_KEY = process.env.NEXT_PUBLIC_API_KEY;
  * 1. Usuario hace clic en "Login with Google"
  * 2. Azure EasyAuth maneja la autenticación con Google
  * 3. Usuario es redirigido a esta página
- * 4. Esta página obtiene la información del usuario de EasyAuth
+ * 4. Esta página obtiene la información del usuario directamente de /.auth/me (cliente)
  * 5. Envía la información al microservicio para crear/actualizar usuario
  * 6. Guarda el JWT token
  * 7. Redirige al dashboard o página configurada
@@ -32,17 +32,38 @@ export default function AuthCallbackPage() {
     try {
       setStatus("Obtaining user information...");
 
-      // 1. Obtener información del usuario de Azure EasyAuth
-      const easyAuthResponse = await fetch('/api/auth/easyauth-info');
+      // 1. Obtener información del usuario de Azure EasyAuth directamente desde el cliente
+      // Esto evita problemas de SSL al hacer fetch desde el servidor
+      const easyAuthResponse = await fetch('/.auth/me');
 
       if (!easyAuthResponse.ok) {
         throw new Error('Failed to get authentication information from EasyAuth');
       }
 
-      const easyAuthData = await easyAuthResponse.json();
+      const easyAuthArray = await easyAuthResponse.json();
+
+      // EasyAuth retorna un array con la información del usuario
+      if (!easyAuthArray || easyAuthArray.length === 0) {
+        throw new Error('No authentication data found');
+      }
+
+      const authData = easyAuthArray[0];
+      const claims = authData.user_claims || [];
+
+      // Función helper para extraer claims
+      const getClaim = (type: string) => {
+        const claim = claims.find((c: any) => c.typ === type);
+        return claim ? claim.val : null;
+      };
+
+      // Extraer información del usuario desde los claims
+      const email = getClaim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
+      const name = getClaim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name');
+      const givenName = getClaim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname');
+      const surname = getClaim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname');
 
       // Validar que tenemos la información necesaria
-      if (!easyAuthData.email) {
+      if (!email) {
         throw new Error('Email not provided by authentication provider');
       }
 
@@ -50,19 +71,19 @@ export default function AuthCallbackPage() {
 
       // 2. Extraer nombre y apellido
       // Prioridad: givenName/surname > name dividido > email
-      let firstName = easyAuthData.givenName || '';
-      let lastName = easyAuthData.surname || '';
+      let firstName = givenName || '';
+      let lastName = surname || '';
 
-      if (!firstName && !lastName && easyAuthData.name) {
+      if (!firstName && !lastName && name) {
         // Intentar dividir el nombre completo
-        const nameParts = easyAuthData.name.split(' ');
+        const nameParts = name.split(' ');
         firstName = nameParts[0] || '';
         lastName = nameParts.slice(1).join(' ') || '';
       }
 
       // Si aún no tenemos nombre, usar el email
       if (!firstName) {
-        firstName = easyAuthData.email.split('@')[0];
+        firstName = email.split('@')[0];
       }
       if (!lastName) {
         lastName = 'User';
@@ -77,15 +98,15 @@ export default function AuthCallbackPage() {
         headers['Ocp-Apim-Subscription-Key'] = APIM_KEY;
       }
 
-      const oauthResponse = await fetch(`${APIM_URL}/users/api/v1/auth/oauth`, {
+      const oauthResponse = await fetch(`${APIM_URL}/users/api/v1/auth/oauth/google`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          email: easyAuthData.email,
+          email: email,
           firstName: firstName,
           lastName: lastName,
-          provider: easyAuthData.provider || 'google',
-          providerId: easyAuthData.providerId || easyAuthData.email,
+          provider: authData.provider_name || 'google',
+          providerId: authData.user_id || email,
         }),
       });
 
