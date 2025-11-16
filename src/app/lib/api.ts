@@ -3,8 +3,9 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "https://apim-quick-speak.azure-api.net";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
-// Clave para almacenar el token JWT en localStorage
+// Claves para almacenar el token JWT y userId en localStorage
 const TOKEN_STORAGE_KEY = "authToken";
+const USER_ID_STORAGE_KEY = "userId";
 
 type ApiError = {
   success?: boolean;
@@ -12,15 +13,18 @@ type ApiError = {
 };
 
 /**
- * Manejo de tokens JWT en localStorage
+ * Manejo de tokens JWT y userId en localStorage
  */
 export const tokenManager = {
   /**
-   * Guarda el token JWT en localStorage
+   * Guarda el token JWT y userId en localStorage
    */
-  saveToken: (token: string): void => {
+  saveToken: (token: string, userId?: number): void => {
     if (typeof window !== "undefined") {
       localStorage.setItem(TOKEN_STORAGE_KEY, token);
+      if (userId !== undefined) {
+        localStorage.setItem(USER_ID_STORAGE_KEY, userId.toString());
+      }
     }
   },
 
@@ -35,11 +39,23 @@ export const tokenManager = {
   },
 
   /**
-   * Elimina el token JWT de localStorage
+   * Obtiene el userId desde localStorage
+   */
+  getUserId: (): number | null => {
+    if (typeof window !== "undefined") {
+      const userId = localStorage.getItem(USER_ID_STORAGE_KEY);
+      return userId ? parseInt(userId, 10) : null;
+    }
+    return null;
+  },
+
+  /**
+   * Elimina el token JWT y userId de localStorage
    */
   removeToken: (): void => {
     if (typeof window !== "undefined") {
       localStorage.removeItem(TOKEN_STORAGE_KEY);
+      localStorage.removeItem(USER_ID_STORAGE_KEY);
     }
   },
 
@@ -118,9 +134,58 @@ function buildHeaders(extra?: Record<string, string>) {
   return headers;
 }
 
+/**
+ * Mapea las rutas del frontend al formato del backend de usuarios a través de APIM
+ *
+ * Ejemplos:
+ * - /user/languages → /users/api/v1/users/{userId}/languages
+ * - /user/languages/starting → /users/api/v1/languages/starting
+ * - /user/profile/basic → /users/api/v1/users/{userId}/profile
+ */
+function mapEndpoint(endpoint: string): string {
+  const userId = tokenManager.getUserId();
+
+  // Mapeo de rutas públicas de languages (no requieren userId)
+  if (endpoint === "/user/languages/starting") {
+    return "/users/api/v1/languages/starting";
+  }
+  if (endpoint === "/user/languages/catalog" || endpoint === "/user/languages/full-catalog") {
+    return "/users/api/v1/languages";
+  }
+
+  // Mapeo de rutas que requieren userId
+  if (userId) {
+    // /user/languages → /users/api/v1/users/{userId}/languages
+    if (endpoint === "/user/languages") {
+      return `/users/api/v1/users/${userId}/languages`;
+    }
+
+    // /user/languages/{languageId}/make-native → /users/api/v1/users/{userId}/languages/{languageId}/native
+    if (endpoint.match(/^\/user\/languages\/(\d+)\/make-native$/)) {
+      const languageId = endpoint.match(/\/user\/languages\/(\d+)\/make-native$/)?.[1];
+      return `/users/api/v1/users/${userId}/languages/${languageId}/native`;
+    }
+
+    // /user/languages/{languageId} → /users/api/v1/users/{userId}/languages/{languageId}
+    if (endpoint.match(/^\/user\/languages\/\d+$/)) {
+      const languageId = endpoint.match(/\/user\/languages\/(\d+)$/)?.[1];
+      return `/users/api/v1/users/${userId}/languages/${languageId}`;
+    }
+
+    // /user/profile/basic → /users/api/v1/users/{userId}
+    if (endpoint === "/user/profile/basic") {
+      return `/users/api/v1/users/${userId}`;
+    }
+  }
+
+  // Si no coincide con ningún mapeo, retornar el endpoint original
+  return endpoint;
+}
+
 export const apiClient = {
   async get<T>(endpoint: string): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const mappedEndpoint = mapEndpoint(endpoint);
+    const url = `${API_BASE_URL}${mappedEndpoint}`;
     const res = await fetch(url, {
       method: "GET",
       headers: buildHeaders(),
@@ -129,7 +194,8 @@ export const apiClient = {
   },
 
   async post<T>(endpoint: string, body: any): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const mappedEndpoint = mapEndpoint(endpoint);
+    const url = `${API_BASE_URL}${mappedEndpoint}`;
     const res = await fetch(url, {
       method: "POST",
       headers: buildHeaders(),
@@ -139,7 +205,8 @@ export const apiClient = {
   },
 
   async put<T>(endpoint: string, body: any): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const mappedEndpoint = mapEndpoint(endpoint);
+    const url = `${API_BASE_URL}${mappedEndpoint}`;
     const res = await fetch(url, {
       method: "PUT",
       headers: buildHeaders(),
@@ -149,7 +216,8 @@ export const apiClient = {
   },
 
   async delete<T>(endpoint: string): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const mappedEndpoint = mapEndpoint(endpoint);
+    const url = `${API_BASE_URL}${mappedEndpoint}`;
     const res = await fetch(url, {
       method: "DELETE",
       headers: buildHeaders(),
@@ -158,7 +226,8 @@ export const apiClient = {
   },
 
   async patch<T>(endpoint: string, body: any): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const mappedEndpoint = mapEndpoint(endpoint);
+    const url = `${API_BASE_URL}${mappedEndpoint}`;
     const res = await fetch(url, {
       method: "PATCH",
       headers: buildHeaders(),

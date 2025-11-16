@@ -77,9 +77,9 @@ const SignUpPage: NextPage = () => {
 
       console.log("Signup response:", data);
 
-      // Guardar token si el registro fue exitoso
+      // Guardar token y userId si el registro fue exitoso
       if (data.token) {
-        tokenManager.saveToken(data.token);
+        tokenManager.saveToken(data.token, data.userId);
         window.location.href = data.next || "/pick_native_language";
       } else if (data.ok) {
         // Fallback para respuesta antigua sin token
