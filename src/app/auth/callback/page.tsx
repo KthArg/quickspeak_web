@@ -98,7 +98,7 @@ export default function AuthCallbackPage() {
         headers['Ocp-Apim-Subscription-Key'] = APIM_KEY;
       }
 
-      const oauthResponse = await fetch(`${APIM_URL}/users/api/v1/auth/oauth/google`, {
+      const oauthResponse = await fetch(`${APIM_URL}/users/api/v1/auth/oauth`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
