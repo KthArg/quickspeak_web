@@ -1,4 +1,4 @@
-// app/lib/api.ts
+// src/app/lib/api.ts
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "https://apim-quick-speak.azure-api.net";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
@@ -68,24 +68,13 @@ export const tokenManager = {
 };
 
 async function handleResponse<T>(res: Response, url: string): Promise<T> {
-  const contentType = res.headers.get("content-type") || "";
+  const ct = res.headers.get("content-type") || "";
   let data: any = null;
 
-  // Intenta parsear JSON si viene
-  if (contentType.includes("application/json")) {
-    try {
-      data = await res.json();
-    } catch {
-      // ignora parse error y sigue con texto plano si aplica
-    }
+  if (ct.includes("application/json")) {
+    try { data = await res.json(); } catch {}
   } else {
-    // Como fallback intenta texto
-    try {
-      const txt = await res.text();
-      data = txt ? { message: txt } : null;
-    } catch {
-      // nada
-    }
+    try { const txt = await res.text(); data = txt ? { message: txt } : null; } catch {}
   }
 
   // Manejar errores de autenticación
@@ -105,12 +94,9 @@ async function handleResponse<T>(res: Response, url: string): Promise<T> {
   }
 
   if (!res.ok) {
-    const msg =
-      (data && (data as ApiError).message) ||
-      `Error ${res.status} al llamar ${url}`;
+    const msg = (data as ApiError)?.message || `Error ${res.status} al llamar ${url}`;
     throw new Error(msg);
   }
-
   return data as T;
 }
 
@@ -192,7 +178,6 @@ export const apiClient = {
     });
     return handleResponse<T>(res, url);
   },
-
   async post<T>(endpoint: string, body: any): Promise<T> {
     const mappedEndpoint = mapEndpoint(endpoint);
     const url = `${API_BASE_URL}${mappedEndpoint}`;
