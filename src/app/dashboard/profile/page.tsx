@@ -42,7 +42,7 @@ const ProfilePage: NextPage = () => {
   const [editingPassword, setEditingPassword] = useState(false);
 
   // Verificar si el usuario es OAuth (no puede cambiar email/password)
-  const isOAuthUser = profile?.authProvider && profile.authProvider !== "LOCAL";
+  const isOAuthUser = Boolean(profile?.authProvider && profile.authProvider !== "LOCAL");
 
   // Cargar perfil del usuario
   useEffect(() => {
