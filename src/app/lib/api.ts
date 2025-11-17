@@ -175,6 +175,16 @@ function mapEndpoint(endpoint: string): string {
     if (endpoint === "/user/profile/basic") {
       return `/users/api/v1/users/${userId}`;
     }
+
+    // /user/profile → /users/api/v1/users/{userId}/profile
+    if (endpoint === "/user/profile") {
+      return `/users/api/v1/users/${userId}/profile`;
+    }
+
+    // /user → /users/api/v1/users/{userId}
+    if (endpoint === "/user") {
+      return `/users/api/v1/users/${userId}`;
+    }
   }
 
   // Si no coincide con ningún mapeo, retornar el endpoint original
