@@ -77,13 +77,15 @@ const PickLanguagesToLearnPage: NextPage = () => {
     try {
       setSaving(true);
       setError(null);
-      // POST al mock /selections/languages
-      const response = await fetch('/api/selections/starting-languages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ selected: selectedNames })
-      });
-      const res = await response.json();
+
+      // Agregar cada idioma seleccionado al usuario
+      await Promise.all(
+        selectedIds.map(languageId =>
+          apiClient.post("/user/languages", { languageId })
+        )
+      );
+
+      // Redirigir al dashboard después de guardar
       window.location.href = "/dashboard/speakers";
     } catch (e: any) {
       setError(e?.message ?? "Error al guardar selección");

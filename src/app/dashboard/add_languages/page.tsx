@@ -5,6 +5,7 @@ import type { NextPage } from "next";
 import Image from "next/image";
 import { useTheme } from "@/app/contexts/ThemeContext";
 import { Languages, X } from "lucide-react";
+import { apiClient } from "@/app/lib/api";
 
 // --- Tipos ---
 type Language = {
@@ -194,20 +195,18 @@ const AddLanguagePage: NextPage = () => {
 
   const handleAddLanguage = useCallback(async (lang: Language) => {
     try {
-      await fetch("/api/user/languages/add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: lang.name }),
-      });
+      // Usar apiClient para enviar al backend real
+      await apiClient.post("/user/languages", { languageId: lang.id });
+
       // Actualiza el estado local para reflejar el cambio
       setUserLanguages((prev) =>
         prev.includes(lang.name) ? prev : [...prev, lang.name]
       );
       setSelectedLanguage(null);
       alert(`${lang.name} has been added to your list!`);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Error agregando idioma", e);
-      alert("There was an error adding the language.");
+      alert(e?.message || "There was an error adding the language.");
     }
   }, []);
 

@@ -71,15 +71,14 @@ const PickNativeLanguagePage: NextPage = () => {
     if (!selectedLanguage) return;
     try {
       setSaving(true);
-      // Post al mock 
-      await fetch('/api/languages/native', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: selectedLanguage.id,
-          name: selectedLanguage.name
-        })
-      });
+
+      // Primero agregar el idioma al usuario
+      await apiClient.post("/user/languages", { languageId: selectedLanguage.id });
+
+      // Luego marcarlo como nativo
+      await apiClient.patch(`/user/languages/${selectedLanguage.id}/make-native`, {});
+
+      // Redirigir a selección de idiomas para aprender
       window.location.href = "/pick_starting_languages";
     } catch (e: any) {
       alert(e?.message || "No se pudo guardar el idioma.");
