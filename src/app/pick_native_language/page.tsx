@@ -25,19 +25,36 @@ const PickNativeLanguagePage: NextPage = () => {
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Cargar catálogo desde el mock
+  // Cargar catálogo de idiomas para selección nativa
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         setLoading(true);
         const response = await fetch('/api/languages/select-native');
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
         const data = await response.json();
+        console.log("Fetched languages:", data);
+
         if (!mounted) return;
-        setLanguages(data.languages || []);
-        // Pre-selecciona el primero 
-        setSelectedLanguage((data.languages && data.languages[0]) || null);
+
+        // El backend retorna directamente un array de idiomas
+        const languagesArray = Array.isArray(data) ? data : [];
+
+        if (languagesArray.length === 0) {
+          setError("No se encontraron idiomas disponibles.");
+          return;
+        }
+
+        setLanguages(languagesArray);
+        // Pre-selecciona el primero
+        setSelectedLanguage(languagesArray[0]);
       } catch (e: any) {
+        console.error("Error loading languages:", e);
         setError(e?.message || "No se pudo cargar el catálogo de idiomas.");
       } finally {
         setLoading(false);
@@ -112,10 +129,25 @@ const PickNativeLanguagePage: NextPage = () => {
           </p>
         </header>
 
-        {loading && <p className="px-4">Loading languages…</p>}
-        {error && <p className="px-4 text-red-400">{error}</p>}
+        {loading && <p className="px-4 text-lg">Loading languages…</p>}
+        {error && (
+          <div className="px-4 text-center">
+            <p className="text-red-400 text-lg mb-2">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="text-sm underline hover:text-red-300"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+        {!loading && !error && languages.length === 0 && (
+          <p className="px-4 text-lg text-yellow-400">
+            No languages available. Please try again later.
+          </p>
+        )}
 
-        {!loading && !error && (
+        {!loading && !error && languages.length > 0 && (
           <>
             <div className="w-full grid grid-cols-3 gap-x-4 gap-y-8 md:gap-y-12">
               {languages.map((lang) => {
