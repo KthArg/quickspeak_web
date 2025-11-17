@@ -1,4 +1,4 @@
-import { apiClient } from '@/app/lib/api';
+import { apiClient, type SendMessageRequest, type SendMessageResponse } from '@/app/lib/api';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
@@ -6,12 +6,12 @@ export async function POST(
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    // ✅ Await params primero
     const { sessionId } = await params;
-    const body = await request.json();
-    const data = await apiClient.post(
+    const body: SendMessageRequest = await request.json();
+    const userId = request.headers.get('x-user-id') || 'anonymous';
+    const data = await apiClient.post<SendMessageResponse>(
       `/conversation/chat/session/${sessionId}/message`,
-      body
+      { ...body, userId }
     );
     return NextResponse.json(data);
   } catch (error: any) {

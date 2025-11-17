@@ -5,6 +5,7 @@ import LeftSidebar from '../components/leftSideBar';
 import { useTheme } from '../contexts/ThemeContext';
 import { Menu, X } from 'lucide-react';
 import { tokenManager } from '../lib/api';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 // --- SUB-COMPONENTE: Modal de Confirmación de Logout (con Light Mode) ---
 const LogoutConfirmationModal = ({
@@ -101,7 +102,7 @@ export default function DashboardLayout({
   };
 
   return (
-    <>
+    <ProtectedRoute>
       <div
         className={`flex h-screen w-full ${
           theme === "dark"
@@ -141,6 +142,6 @@ export default function DashboardLayout({
           onCancel={() => setIsLogoutModalOpen(false)}
         />
       )}
-    </>
+    </ProtectedRoute>
   );
 }

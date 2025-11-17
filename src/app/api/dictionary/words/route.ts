@@ -1,10 +1,30 @@
-// app/api/dictionary/words/route.ts
-import { apiClient } from '@/app/lib/api';
-import { NextResponse } from 'next/server';
+import { apiClient, type Word } from '@/app/lib/api';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const data = await apiClient.get('/conversation/dictionary/words');
+    const { searchParams } = new URL(request.url);
+    const language = searchParams.get('language');
+    if (!language) {
+      return NextResponse.json(
+        { error: 'Language parameter is required' },
+        { status: 400 }
+      );
+    }
+    const data = await apiClient.get<{ words: Word[] }>(`/conversation/dictionary/words?language=${language}`);
+    return NextResponse.json(data);
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const data = await apiClient.post('/conversation/dictionary/words', body);
     return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json(

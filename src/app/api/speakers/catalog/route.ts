@@ -1,4 +1,3 @@
-// app/api/speakers/catalog/route.ts
 import { apiClient } from '@/app/lib/api';
 import { NextResponse } from 'next/server';
 

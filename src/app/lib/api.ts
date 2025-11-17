@@ -1,15 +1,15 @@
-// app/lib/api.ts
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "https://apim-quick-speak.azure-api.net";
+// src/app/lib/api.ts
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://apim-quick-speak.azure-api.net';
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
 // Claves para almacenar el token JWT y userId en localStorage
-const TOKEN_STORAGE_KEY = "authToken";
-const USER_ID_STORAGE_KEY = "userId";
+const TOKEN_STORAGE_KEY = 'authToken';
+const USER_ID_STORAGE_KEY = 'userId';
 
 type ApiError = {
   success?: boolean;
   message?: string;
+  error?: string;
 };
 
 /**
@@ -68,46 +68,45 @@ export const tokenManager = {
 };
 
 async function handleResponse<T>(res: Response, url: string): Promise<T> {
-  const contentType = res.headers.get("content-type") || "";
+  const contentType = res.headers.get('content-type') || '';
   let data: any = null;
 
-  // Intenta parsear JSON si viene
-  if (contentType.includes("application/json")) {
+  if (contentType.includes('application/json')) {
     try {
       data = await res.json();
     } catch {
-      // ignora parse error y sigue con texto plano si aplica
+      // Ignore parsing error
     }
   } else {
-    // Como fallback intenta texto
     try {
       const txt = await res.text();
       data = txt ? { message: txt } : null;
     } catch {
-      // nada
+      // Ignore
     }
   }
 
-  // Manejar errores de autenticación
-  if (res.status === 401 || res.status === 403) {
-    // Token expirado o inválido - limpiar y redirigir a login
+  // Handle certificate errors
+  if (res.status === 401 && res.headers.get('www-authenticate')?.includes('certificate')) {
     tokenManager.removeToken();
-
-    // Solo redirigir si estamos en el navegador
-    if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
-      window.location.href = "/login";
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login?error=certificate';
     }
+    throw new Error('Client certificate required. Please contact administrator.');
+  }
 
-    const msg =
-      (data && (data as ApiError).message) ||
-      "Sesión expirada. Por favor inicia sesión nuevamente.";
+  // Handle authentication errors globally
+  if (res.status === 401 || res.status === 403) {
+    tokenManager.removeToken();
+    if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+      window.location.href = '/login';
+    }
+    const msg = (data as ApiError)?.message || 'Session expired. Please login again.';
     throw new Error(msg);
   }
 
   if (!res.ok) {
-    const msg =
-      (data && (data as ApiError).message) ||
-      `Error ${res.status} al llamar ${url}`;
+    const msg = (data as ApiError)?.message || `Error ${res.status} calling ${url}`;
     throw new Error(msg);
   }
 
@@ -135,17 +134,23 @@ function buildHeaders(extra?: Record<string, string>) {
 }
 
 /**
- * Mapea las rutas del frontend al formato del backend de usuarios a través de APIM
+ * Maps frontend routes to backend API endpoints through APIM
  *
- * Ejemplos:
- * - /user/languages → /users/api/v1/users/{userId}/languages
- * - /user/languages/starting → /users/api/v1/languages/starting
- * - /user/profile/basic → /users/api/v1/users/{userId}/profile
+ * Examples:
+ * - /conversation/speakers/catalog → /conversation/speakers/catalog
+ * - /conversation/chat/session/{sessionId}/message → /conversation/chat/session/{sessionId}/message
+ * - /conversation/dictionary/words → /conversation/dictionary/words
  */
 function mapEndpoint(endpoint: string): string {
+  // Conversation Service endpoints (already prefixed with /conversation/)
+  if (endpoint.startsWith('/conversation/')) {
+    return endpoint;
+  }
+
   const userId = tokenManager.getUserId();
 
-  // Mapeo de rutas públicas de languages (no requieren userId)
+  // User Service endpoints
+  // Public routes for languages (no userId required)
   if (endpoint === "/user/languages/starting") {
     return "/users/api/v1/languages/starting";
   }
@@ -153,7 +158,7 @@ function mapEndpoint(endpoint: string): string {
     return "/users/api/v1/languages";
   }
 
-  // Mapeo de rutas que requieren userId
+  // Routes that require userId
   if (userId) {
     // /user/languages → /users/api/v1/users/{userId}/languages
     if (endpoint === "/user/languages") {
@@ -178,7 +183,7 @@ function mapEndpoint(endpoint: string): string {
     }
   }
 
-  // Si no coincide con ningún mapeo, retornar el endpoint original
+  // If no mapping matches, return the original endpoint
   return endpoint;
 }
 
@@ -236,3 +241,87 @@ export const apiClient = {
     return handleResponse<T>(res, url);
   },
 };
+
+// Type definitions for Conversation Service
+
+export interface Speaker {
+  id: string;
+  name: string;
+  language: string;
+  flagEmoji: string;
+  avatarSeed: string;
+  personality: string[];
+  interests: string[];
+  color: string;
+}
+
+export interface ChatMessage {
+  id: number;
+  sender: 'user' | 'speaker';
+  text: string;
+  timestamp: string;
+}
+
+export interface ChatSession {
+  speaker: Speaker;
+  messages: ChatMessage[];
+}
+
+export interface SendMessageRequest {
+  text: string;
+}
+
+export interface SendMessageResponse {
+  success: boolean;
+  echo?: {
+    receivedAtUtc: string;
+    sessionId: string;
+    yourMessage: string;
+  };
+  assistantReply?: ChatMessage;
+}
+
+export interface RecentChat {
+  id: string;
+  speakerId: string;
+  chatId: string;
+  name: string;
+  lastMessage: string;
+  timestamp: string;
+  unread: boolean;
+  color: string;
+  avatarSeed: string;
+  flagEmoji: string;
+}
+
+export interface DictionaryItem {
+  id: string;
+  language: string;
+  wordCount: number;
+  flagUrl: string;
+}
+
+export interface Word {
+  id: number;
+  word: string;
+  color: string;
+  translated: boolean;
+  translations: Array<{
+    language: string;
+    word: string;
+    color: string;
+  }>;
+}
+
+export interface NotificationPayload {
+  type: 'WORD_SAVED' | 'NEW_MESSAGE' | 'WORD_FORGOTTEN';
+  userId: string;
+  data: Record<string, any>;
+}
+
+export interface SavedSpeaker {
+  id: string;
+  name: string;
+  avatarSeed: string;
+  flagEmoji: string;
+}

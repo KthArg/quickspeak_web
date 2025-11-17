@@ -12,50 +12,16 @@ import {
   Bookmark,
   RotateCw,
 } from "lucide-react";
-import { apiClient } from "@/app/lib/api";
-
-// -------------------- Tipos --------------------
-type SavedSpeaker = {
-  id: string;
-  name: string;
-  avatarSeed: string;
-  flagEmoji: string;
-};
-
-type ColorToken =
-  | "teal"
-  | "pink"
-  | "yellow"
-  | "orange"
-  | "blue"
-  | "green"
-  | "red"
-  | "purple"
-  | "sky"
-  | "indigo"
-  | "emerald"
-  | "rose";
-
-type RecentChat = {
-  id: number;
-  name: string;
-  lastMessage: string;
-  timestamp: string;
-  unread: boolean;
-  colorClass?: string;
-  color?: ColorToken;
-  avatarSeed: string;
-  flagEmoji: string;
-  speakerId?: string;
-  chatId?: string;
-};
+import { apiClient, type SavedSpeaker, type RecentChat } from '@/app/lib/api';
 
 type SavedSpeakersResponse = {
   savedSpeakers: SavedSpeaker[];
 };
 
 type RecentChatsResponse = {
-  recentChats: RecentChat[];
+  success: boolean;
+  data: RecentChat[];
+  timestamp: string;
 };
 
 // -------------------- Helper para convertir emoji a código de país --------------------
@@ -173,11 +139,11 @@ const SpeakersPageV2: NextPage = () => {
           fetch('/api/chats/recent')
         ]);
         
-        const savedSpeakersResponse = await savedSpeakersRes.json();
-        const recentChatsResponse = await recentChatsRes.json();
+        const savedSpeakersResponse: SavedSpeakersResponse = await savedSpeakersRes.json();
+        const recentChatsResponse: RecentChatsResponse = await recentChatsRes.json();
 
         setSavedSpeakers(savedSpeakersResponse.savedSpeakers);
-        setRecentChats(recentChatsResponse.recentChats);
+        setRecentChats(recentChatsResponse.data);
       } catch (err: any) {
         setError(err.message || "Error loading data");
       } finally {

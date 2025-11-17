@@ -1,98 +1,30 @@
-"use client";
+'use client';
 
-import type { NextPage } from "next";
-import { useEffect, useMemo, useState } from "react";
-import { useTheme } from "@/app/contexts/ThemeContext";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { Languages, MessageSquare, Bookmark } from "lucide-react";
+import type { NextPage } from 'next';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useTheme } from '@/app/contexts/ThemeContext';
+import { Languages, MessageSquare, Bookmark } from 'lucide-react';
+import { apiClient, type DictionaryItem } from '@/app/lib/api';
+import Image from 'next/image';
 
-// ===== Tipos de respuesta del backend =====
-type DictionaryItem = {
-  id: number;
-  language: string;
-  wordCount: number;
-  flagUrl: string;
-};
-
-type DictionariesResponse = {
-  dictionaries: DictionaryItem[];
-};
-
-// ===== Util: mapeo de colores por idioma (frontend) =====
-const languageColor = (lang: string): string => {
-  const key = lang.toLowerCase();
-  if (key.includes("mandarin") || key.includes("chinese") || key.includes("zh"))
-    return "bg-red-500";
-  if (key.includes("portuguese") || key.includes("pt")) return "bg-yellow-500";
-  if (key.includes("german") || key.includes("de")) return "bg-teal-400";
-  if (key.includes("spanish") || key.includes("es")) return "bg-sky-500";
-  // color por defecto
-  return "bg-gray-400";
-};
-
-// --- SUB-COMPONENTE: Tarjeta de Diccionario ---
-const DictionaryCard = ({
-  dictionary,
-  theme,
-  onClick,
-}: {
-  dictionary: DictionaryItem & { color: string };
-  theme: "light" | "dark";
-  onClick: () => void;
-}) => {
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-center p-3 sm:p-4 rounded-2xl shadow-lg transition-transform hover:scale-[1.02] ${dictionary.color}`}
-    >
-      <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full flex-shrink-0 bg-white/20 p-1">
-        <Image
-          src={dictionary.flagUrl}
-          alt={`${dictionary.language} flag`}
-          fill
-          className="rounded-full object-cover"
-        />
-      </div>
-      <div
-        className={`flex-grow flex flex-col items-start ml-4 text-left ${
-          theme === "dark" ? "text-white" : "text-black"
-        }`}
-      >
-        <h3 className="font-bold text-2xl sm:text-3xl">
-          {dictionary.language}
-        </h3>
-        <p
-          className={`font-semibold text-md sm:text-lg ${
-            theme === "dark" ? "text-white/80" : "text-gray-800"
-          }`}
-        >
-          {dictionary.wordCount} words saved
-        </p>
-      </div>
-    </button>
-  );
-};
-
-const DictionaryPage: NextPage = () => {
+const DictionaryCatalogPage: NextPage = () => {
   const { theme } = useTheme();
   const router = useRouter();
-  const [data, setData] = useState<DictionaryItem[]>([]);
+  const [dictionaries, setDictionaries] = useState<DictionaryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Carga desde el mock de APIM
   useEffect(() => {
     let isMounted = true;
     (async () => {
       try {
-        const response = await fetch('/api/dictionary/catalog');
-        const res = await response.json();
+        setLoading(true);
+        const data = await apiClient.get<{ dictionaries: DictionaryItem[] }>('/conversation/dictionary/catalog');
         if (!isMounted) return;
-        setData(res.dictionaries ?? []);
-      } catch (e: any) {
-        if (!isMounted) return;
-        setError(e?.message || "Error al cargar diccionarios");
+        setDictionaries(data.dictionaries);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load dictionaries');
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -102,51 +34,64 @@ const DictionaryPage: NextPage = () => {
     };
   }, []);
 
-  // agregamos color en frontend
-  const decorated = useMemo(() => {
-    return data.map((d) => ({ ...d, color: languageColor(d.language) }));
-  }, [data]);
-
-  // función para navegar al diccionario
-  const handleDictionaryClick = () => {
-    router.push("/dashboard/dictionary");
+  const languageColor = (language: string): string => {
+    const lang = language.toLowerCase();
+    if (lang.includes('mandarin') || lang.includes('chinese')) return 'bg-red-500';
+    if (lang.includes('portuguese')) return 'bg-yellow-500';
+    if (lang.includes('german')) return 'bg-teal-400';
+    if (lang.includes('spanish')) return 'bg-sky-500';
+    if (lang.includes('french')) return 'bg-purple-500';
+    return 'bg-gray-400';
   };
 
-  return (
-    <div
-      className={`w-full min-h-screen relative font-cabin flex flex-col overflow-hidden transition-colors
-        ${
-          theme === "dark"
-            ? "bg-gradient-to-b from-[#232323] to-[#121212] text-white"
-            : "bg-gradient-to-b from-white to-teal-100 text-black"
-        }`}
-    >
-      {/* Brillo de fondo sutil */}
-      <div
-        className={`absolute inset-0 ${
-          theme === "dark"
-            ? "bg-gradient-to-t from-teal-900/30 to-transparent"
-            : ""
-        }`}
-      ></div>
+  const handleDictionaryClick = (language: string) => {
+    router.push(`/dashboard/dictionary?language=${encodeURIComponent(language)}`);
+  };
 
+  if (loading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${
+        theme === 'dark' ? 'bg-[#232323] text-white' : 'bg-white text-black'
+      }`}>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${
+        theme === 'dark' ? 'bg-[#232323] text-red-400' : 'bg-white text-red-600'
+      }`}>
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Error</h2>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`w-full min-h-screen relative font-cabin flex flex-col overflow-hidden transition-colors ${
+      theme === 'dark'
+        ? 'bg-gradient-to-b from-[#232323] to-[#121212] text-white'
+        : 'bg-gradient-to-b from-white to-teal-100 text-black'
+    }`}>
+      {/* Background glow */}
+      <div className={`absolute inset-0 ${
+        theme === 'dark' ? 'bg-gradient-to-t from-teal-900/30 to-transparent' : ''
+      }`} />
       <main className="relative z-10 w-full max-w-2xl mx-auto flex-grow p-6 md:p-10 flex flex-col gap-8 pb-32">
         <header className="flex flex-col items-start gap-4">
-          <h1
-            className={`text-5xl sm:text-6xl md:text-7xl font-bold ${
-              theme === "dark" ? "text-cyan-400" : "text-cyan-500"
-            }`}
-          >
+          <h1 className={`text-5xl sm:text-6xl md:text-7xl font-bold ${
+            theme === 'dark' ? 'text-cyan-400' : 'text-cyan-500'
+          }`}>
             Dictionary
           </h1>
           <div className="bg-red-500 rounded-full px-4 py-1.5 shadow">
-            <span className="text-md font-bold text-white">
-              Choose a Dictionary
-            </span>
+            <span className="text-md font-bold text-white">Choose a Dictionary</span>
           </div>
         </header>
-
-        {/* Estados: loading / error / data */}
         {loading && (
           <section className="w-full">
             <div className="animate-pulse rounded-2xl h-20 bg-gray-300/40 mb-3" />
@@ -154,7 +99,6 @@ const DictionaryPage: NextPage = () => {
             <div className="animate-pulse rounded-2xl h-20 bg-gray-300/40" />
           </section>
         )}
-
         {error && !loading && (
           <section className="w-full">
             <div className="rounded-2xl p-4 bg-red-600/20 border border-red-600/40 text-red-200">
@@ -162,50 +106,59 @@ const DictionaryPage: NextPage = () => {
             </div>
           </section>
         )}
-
         {!loading && !error && (
           <section className="w-full flex flex-col gap-4">
-            {decorated.map((dict) => (
-              <DictionaryCard
+            {dictionaries.map((dict) => (
+              <button
                 key={dict.id}
-                dictionary={dict}
-                theme={theme as "light" | "dark"}
-                onClick={handleDictionaryClick}
-              />
+                onClick={() => handleDictionaryClick(dict.language)}
+                className={`w-full flex items-center p-3 sm:p-4 rounded-2xl shadow-lg border-2 transition-transform hover:scale-[1.02] ${
+                  theme === 'dark'
+                    ? 'border-purple-500 text-purple-300 hover:bg-purple-500/10 hover:border-purple-400'
+                    : 'border-purple-600 text-purple-700 hover:bg-purple-50'
+                }`}
+                style={{ borderColor: languageColor(dict.language).replace('bg-', '') }}
+              >
+                <div className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full flex-shrink-0 flex items-center justify-center ${
+                  theme === 'dark' ? 'bg-gray-700' : 'bg-white'
+                }`}>
+                  <Languages
+                    size={40}
+                    className={theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}
+                  />
+                </div>
+                <div className="flex-grow flex flex-col items-start ml-4 text-left">
+                  <h3 className="font-bold text-2xl sm:text-3xl">{dict.language}</h3>
+                  <p className={`font-semibold text-md sm:text-lg ${
+                    theme === 'dark' ? 'text-purple-300/80' : 'text-purple-700/80'
+                  }`}>
+                    {dict.wordCount} words saved
+                  </p>
+                </div>
+              </button>
             ))}
-
+            {/* Add more languages card */}
             <a
               href="/dashboard/add_languages"
-              className={`w-full flex items-center p-3 sm:p-4 rounded-2xl shadow-lg border-2 border-dashed transition-colors 
-              ${
-                theme === "dark"
-                  ? "border-purple-500 text-purple-300 hover:bg-purple-500/10 hover:border-purple-400"
-                  : "border-purple-600 text-purple-700 hover:bg-purple-50"
+              className={`w-full flex items-center p-3 sm:p-4 rounded-2xl shadow-lg border-2 border-dashed transition-colors ${
+                theme === 'dark'
+                  ? 'border-purple-500 text-purple-300 hover:bg-purple-500/10'
+                  : 'border-purple-600 text-purple-700 hover:bg-purple-50'
               }`}
             >
-              <div
-                className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full flex-shrink-0 flex items-center justify-center ${
-                  theme === "dark" ? "bg-gray-700" : "bg-white"
-                }`}
-              >
+              <div className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full flex-shrink-0 flex items-center justify-center ${
+                theme === 'dark' ? 'bg-gray-700' : 'bg-white'
+              }`}>
                 <Languages
                   size={40}
-                  className={`${
-                    theme === "dark" ? "text-purple-400" : "text-purple-600"
-                  }`}
+                  className={theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}
                 />
               </div>
               <div className="flex-grow flex flex-col items-start ml-4 text-left">
-                <h3 className="font-bold text-2xl sm:text-3xl">
-                  More Languages
-                </h3>
-                <p
-                  className={`font-semibold text-md sm:text-lg ${
-                    theme === "dark"
-                      ? "text-purple-300/80"
-                      : "text-purple-700/80"
-                  }`}
-                >
+                <h3 className="font-bold text-2xl sm:text-3xl">More Languages</h3>
+                <p className={`font-semibold text-md sm:text-lg ${
+                  theme === 'dark' ? 'text-purple-300/80' : 'text-purple-700/80'
+                }`}>
                   Tap here to add another language
                 </p>
               </div>
@@ -217,4 +170,4 @@ const DictionaryPage: NextPage = () => {
   );
 };
 
-export default DictionaryPage;
+export default DictionaryCatalogPage;

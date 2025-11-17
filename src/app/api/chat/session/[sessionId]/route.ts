@@ -1,4 +1,4 @@
-import { apiClient } from '@/app/lib/api';
+import { apiClient, type ChatSession } from '@/app/lib/api';
 import { NextResponse } from 'next/server';
 
 export async function GET(
@@ -6,9 +6,8 @@ export async function GET(
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    // ✅ Await params primero
     const { sessionId } = await params;
-    const data = await apiClient.get(`/conversation/chat/session/${sessionId}`);
+    const data = await apiClient.get<ChatSession>(`/conversation/chat/session/${sessionId}`);
     return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json(
