@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import LeftSidebar from "../components/leftSideBar";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
 import { Menu, X } from "lucide-react";
 import {
   connectNotificationSocket,
@@ -93,6 +94,7 @@ export default function DashboardLayout({
 }) {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const { theme } = useTheme();
+  const { logout } = useAuth();
 
   // - Conexión al WebSocket de notificaciones
   // - lee el token de localStorage (lo guardamos en el login)
@@ -169,13 +171,12 @@ export default function DashboardLayout({
     if (typeof window !== "undefined") {
       localStorage.removeItem("access_token");
       localStorage.removeItem("user_id");
-      // Usar también tokenManager para limpieza adicional
-      tokenManager.removeToken();
     }
 
     console.log("Token JWT eliminado - Sesión cerrada");
-    // Redirigir al inicio
-    window.location.href = "/";
+
+    // Usar el contexto de autenticación para logout (limpia token y redirige)
+    logout();
   };
 
   return (

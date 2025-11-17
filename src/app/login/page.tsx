@@ -3,6 +3,7 @@
 import type { NextPage } from "next";
 import { useState } from "react";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { RiVoiceprintFill } from "react-icons/ri";
@@ -24,6 +25,7 @@ type LoginResponse =
 
 const LoginPage: NextPage = () => {
   const { theme } = useTheme();
+  const { login } = useAuth();
   const isDark = theme === "dark";
 
   const [formData, setFormData] = useState({
@@ -87,6 +89,11 @@ const LoginPage: NextPage = () => {
             : (typeof resp.userId === 'string' ? parseInt(resp.userId, 10) : undefined);
 
           tokenManager.saveToken(resp.token, userIdNum);
+
+          // Actualizar el contexto de autenticación
+          if (userIdNum !== undefined) {
+            login(resp.token, userIdNum);
+          }
 
           // También guardar en localStorage para compatibilidad con notificaciones
           if (typeof window !== "undefined") {
