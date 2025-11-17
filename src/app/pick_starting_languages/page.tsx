@@ -22,7 +22,7 @@ const PickLanguagesToLearnPage: NextPage = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Cargar catálogo desde el mock GET /languages
+  // Cargar catálogo de idiomas para aprender
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -30,9 +30,27 @@ const PickLanguagesToLearnPage: NextPage = () => {
         setLoading(true);
         setError(null);
         const response = await fetch('/api/languages/starting');
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
         const data = await response.json();
-        if (mounted) setLanguages(data.languages ?? []);
+        console.log("Fetched languages for starting:", data);
+
+        if (!mounted) return;
+
+        // El backend retorna directamente un array de idiomas
+        const languagesArray = Array.isArray(data) ? data : [];
+
+        if (languagesArray.length === 0) {
+          setError("No se encontraron idiomas disponibles.");
+          return;
+        }
+
+        setLanguages(languagesArray);
       } catch (e: any) {
+        console.error("Error loading starting languages:", e);
         if (mounted) setError(e?.message ?? "Error cargando idiomas");
       } finally {
         if (mounted) setLoading(false);
@@ -115,10 +133,25 @@ const PickLanguagesToLearnPage: NextPage = () => {
           </p>
         </header>
 
-        {loading && <p className="px-4">Cargando idiomas…</p>}
-        {error && <p className="px-4 text-red-400">Error: {error}</p>}
+        {loading && <p className="px-4 text-lg">Cargando idiomas…</p>}
+        {error && (
+          <div className="px-4 text-center">
+            <p className="text-red-400 text-lg mb-2">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="text-sm underline hover:text-red-300"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+        {!loading && !error && languages.length === 0 && (
+          <p className="px-4 text-lg text-yellow-400">
+            No languages available. Please try again later.
+          </p>
+        )}
 
-        {!loading && !error && (
+        {!loading && !error && languages.length > 0 && (
           <>
             <div className="w-full grid grid-cols-3 gap-x-4 gap-y-8 md:gap-y-12">
               {languages.map((lang) => (
