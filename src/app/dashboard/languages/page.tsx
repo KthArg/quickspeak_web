@@ -230,11 +230,28 @@ const LanguagesPage: NextPage = () => {
         setLoading(true);
         setError(null);
         const response = await fetch("/api/languages/catalog");
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
         const data = await response.json();
-        setLanguages(data.languages);
-        setNativeLanguageId(data.nativeLanguageId);
+        console.log("Languages catalog response:", data);
+
+        // Manejar diferentes formatos de respuesta
+        const languagesArray = Array.isArray(data)
+          ? data
+          : (data?.languages || []);
+
+        const nativeId = data?.nativeLanguageId ?? null;
+
+        setLanguages(languagesArray);
+        setNativeLanguageId(nativeId);
       } catch (e: any) {
+        console.error("Error loading languages:", e);
         setError(e?.message ?? "Error cargando idiomas");
+        // Asegurar que se inicialice como array vacío en caso de error
+        setLanguages([]);
       } finally {
         setLoading(false);
       }
@@ -292,14 +309,23 @@ const LanguagesPage: NextPage = () => {
 
       <main className="w-full max-w-4xl flex-grow">
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-3 gap-x-6 gap-y-10">
-          {languages.map((lang) => (
-            <LanguageIcon
-              key={lang.id}
-              lang={lang}
-              isNative={nativeLanguageId === lang.id}
-              onClick={() => setSelectedLanguage(lang)}
-            />
-          ))}
+          {languages && languages.length > 0 ? (
+            languages.map((lang) => (
+              <LanguageIcon
+                key={lang.id}
+                lang={lang}
+                isNative={nativeLanguageId === lang.id}
+                onClick={() => setSelectedLanguage(lang)}
+              />
+            ))
+          ) : (
+            <div className={`col-span-full text-center py-12 ${
+              theme === "dark" ? "text-gray-400" : "text-gray-600"
+            }`}>
+              <p className="text-xl mb-4">No languages added yet</p>
+              <p className="text-sm">Add a language to get started!</p>
+            </div>
+          )}
         </div>
       </main>
 
