@@ -8,20 +8,21 @@ import { FcGoogle } from "react-icons/fc";
 import { RiVoiceprintFill } from "react-icons/ri";
 import { apiClient, tokenManager } from "@/app/lib/api";
 
+// El login puede devolver éxito o error
 type LoginResponse =
   | {
       success: true;
-      user: { email: string; name: string };
+      user?: { email: string; name?: string; id?: string | number; userId?: string };
       token: string;
-      userId: number;
-      expiresIn: number;
+      userId?: string | number;
+      expiresIn?: number;
     }
   | {
       success: false;
       message: string;
     };
 
-const SignUpPage: NextPage = () => {
+const LoginPage: NextPage = () => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
@@ -35,12 +36,14 @@ const SignUpPage: NextPage = () => {
   const [serverError, setServerError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
+  // cuando escribe limpia errores
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((p) => ({ ...p, [name]: value }));
     setServerError(""); // limpia error de servidor al tipear
   };
 
+  // validación básica
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
     if (!formData.email) newErrors.email = "Email is required";
@@ -53,6 +56,7 @@ const SignUpPage: NextPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // submit del form
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setServerError("");
@@ -61,7 +65,7 @@ const SignUpPage: NextPage = () => {
     try {
       setLoading(true);
 
-      // Llamada al mock
+      // Llamada a la API de login
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -70,18 +74,43 @@ const SignUpPage: NextPage = () => {
           password: formData.password,
         }),
       });
-      const resp = await response.json();
 
+      const resp: LoginResponse = await response.json();
       console.log("Login response:", resp);
 
+      // si la API de login te devolvió éxito
       if ("success" in resp && resp.success) {
-        // Guardar el token JWT y userId en localStorage
+        // Guardar el token JWT y userId usando tokenManager
         if (resp.token) {
-          tokenManager.saveToken(resp.token, resp.userId);
+          const userIdNum = typeof resp.userId === 'number'
+            ? resp.userId
+            : (typeof resp.userId === 'string' ? parseInt(resp.userId, 10) : undefined);
+
+          tokenManager.saveToken(resp.token, userIdNum);
+
+          // También guardar en localStorage para compatibilidad con notificaciones
+          if (typeof window !== "undefined") {
+            localStorage.setItem("access_token", resp.token);
+
+            // Guardar userId en formato string para notificaciones
+            let userId: string | null = null;
+            if (resp.userId) {
+              userId = String(resp.userId);
+            } else if (resp.user && (resp.user as any).id) {
+              userId = String((resp.user as any).id);
+            } else if (resp.user && (resp.user as any).userId) {
+              userId = String((resp.user as any).userId);
+            }
+
+            if (userId) {
+              localStorage.setItem("user_id", userId);
+            }
+          }
         }
+
         window.location.href = "/dashboard/speakers";
       } else {
-        // Cuando el mock manda success:false (p.ej. 400, 401 ya son interceptados por apiClient y vienen como throw)
+        // cuando el mock manda success:false
         setServerError(resp.message || "Login failed.");
       }
     } catch (err: any) {
@@ -298,4 +327,4 @@ const SignUpPage: NextPage = () => {
   );
 };
 
-export default SignUpPage;
+export default LoginPage;

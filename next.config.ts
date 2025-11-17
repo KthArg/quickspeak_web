@@ -1,7 +1,15 @@
+// next.config.ts
 const path = require('path');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // ✅ Nuevo nombre en Next 15:
+  serverExternalPackages: [
+    '@azure/service-bus',
+    'ws',
+    'bufferutil',
+    'utf-8-validate',
+  ],
 
   output: 'standalone',
   outputFileTracingRoot: path.join(__dirname),
@@ -9,10 +17,9 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  
+
   images: {
     unoptimized: false,
-
     remotePatterns: [
       {
         protocol: 'https',

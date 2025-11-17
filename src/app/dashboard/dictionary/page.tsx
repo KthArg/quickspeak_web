@@ -5,7 +5,6 @@ import type { NextPage } from 'next';
 import { useSearchParams } from 'next/navigation';
 import { useTheme } from '@/app/contexts/ThemeContext';
 import { apiClient, type Word, type WordDTO } from '@/app/lib/api';
-import Image from 'next/image';
 
 type ColorToken =
   | 'teal' | 'pink' | 'yellow' | 'orange' | 'blue' | 'green'
@@ -28,6 +27,7 @@ const colorBg: Record<ColorToken, string> = {
   blue: 'bg-blue-500', green: 'bg-green-500', red: 'bg-red-500', purple: 'bg-purple-500',
   sky: 'bg-sky-500', indigo: 'bg-indigo-500', emerald: 'bg-emerald-500', rose: 'bg-rose-500',
 };
+
 
 const DictionaryDetailPage: NextPage = () => {
   const { theme } = useTheme();

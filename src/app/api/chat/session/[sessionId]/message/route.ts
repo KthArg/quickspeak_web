@@ -13,10 +13,15 @@ export async function POST(
       `/conversation/chat/session/${sessionId}/message`,
       { ...body, userId }
     );
+
     return NextResponse.json(data);
   } catch (error: any) {
+    console.error(
+      "Error en POST /api/chat/session/[sessionId]/message:",
+      error
+    );
     return NextResponse.json(
-      { error: error.message },
+      { error: error?.message ?? "Internal Server Error" },
       { status: 500 }
     );
   }

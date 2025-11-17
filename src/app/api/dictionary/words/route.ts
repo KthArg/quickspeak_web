@@ -27,9 +27,6 @@ export async function POST(request: NextRequest) {
     const data = await apiClient.post('/conversation/dictionary/words', body);
     return NextResponse.json(data);
   } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

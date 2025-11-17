@@ -109,7 +109,6 @@ async function handleResponse<T>(res: Response, url: string): Promise<T> {
     const msg = (data as ApiError)?.message || `Error ${res.status} calling ${url}`;
     throw new Error(msg);
   }
-
   return data as T;
 }
 
@@ -197,7 +196,6 @@ export const apiClient = {
     });
     return handleResponse<T>(res, url);
   },
-
   async post<T>(endpoint: string, body: any): Promise<T> {
     const mappedEndpoint = mapEndpoint(endpoint);
     const url = `${API_BASE_URL}${mappedEndpoint}`;
