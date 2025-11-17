@@ -23,7 +23,7 @@ export async function POST(
 
     // 2) Llamada REAL a tu backend (APIM)
     const data = await apiClient.post(
-      `/chat/session/${sessionId}/message`,
+      `/conversation/chat/session/${sessionId}/message`,
       body
     );
 

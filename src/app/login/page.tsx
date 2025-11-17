@@ -6,7 +6,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { RiVoiceprintFill } from "react-icons/ri";
-import { apiClient } from "@/app/lib/api";
+import { apiClient, tokenManager } from "@/app/lib/api";
 
 // El login puede devolver éxito o error
 type LoginResponse =
@@ -14,8 +14,8 @@ type LoginResponse =
       success: true;
       user?: { email: string; name?: string; id?: string | number; userId?: string };
       token: string;
+      userId?: string | number;
       expiresIn?: number;
-      userId?: string; // por si tu backend lo manda así
     }
   | {
       success: false;
@@ -65,7 +65,7 @@ const LoginPage: NextPage = () => {
     try {
       setLoading(true);
 
-      // 👇 AQUÍ llamas a tu API del Next (la ruta que ya tienes: /api/auth/login)
+      // Llamada a la API de login
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -80,30 +80,34 @@ const LoginPage: NextPage = () => {
 
       // si la API de login te devolvió éxito
       if ("success" in resp && resp.success) {
-        // 1) guardar token para WS y para fetch
-        if (typeof window !== "undefined" && resp.token) {
-          localStorage.setItem("access_token", resp.token);
+        // Guardar el token JWT y userId usando tokenManager
+        if (resp.token) {
+          const userIdNum = typeof resp.userId === 'number'
+            ? resp.userId
+            : (typeof resp.userId === 'string' ? parseInt(resp.userId, 10) : undefined);
+
+          tokenManager.saveToken(resp.token, userIdNum);
+
+          // También guardar en localStorage para compatibilidad con notificaciones
+          if (typeof window !== "undefined") {
+            localStorage.setItem("access_token", resp.token);
+
+            // Guardar userId en formato string para notificaciones
+            let userId: string | null = null;
+            if (resp.userId) {
+              userId = String(resp.userId);
+            } else if (resp.user && (resp.user as any).id) {
+              userId = String((resp.user as any).id);
+            } else if (resp.user && (resp.user as any).userId) {
+              userId = String((resp.user as any).userId);
+            }
+
+            if (userId) {
+              localStorage.setItem("user_id", userId);
+            }
+          }
         }
 
-        // 2) intentar extraer el userId de todas las formas posibles
-        let userId: string | null = null;
-        // a) si vino directo
-        if ("userId" in resp && resp.userId) {
-          userId = resp.userId;
-        }
-        // b) si vino dentro de user
-        else if (resp.user && (resp.user as any).id) {
-          userId = String((resp.user as any).id);
-        } else if (resp.user && (resp.user as any).userId) {
-          userId = String((resp.user as any).userId);
-        }
-
-        // 3) si logramos obtener el userId lo guardamos
-        if (typeof window !== "undefined" && userId) {
-          localStorage.setItem("user_id", userId);
-        }
-
-        // 4) redirigir igual que antes
         window.location.href = "/dashboard/speakers";
       } else {
         // cuando el mock manda success:false
@@ -304,10 +308,10 @@ const LoginPage: NextPage = () => {
             ></div>
           </div>
           <div className="w-full flex flex-col sm:flex-row justify-center items-center gap-4">
-            {/* Botón Google (si usas Azure Static Web Apps auth flow, déjalo como lo tienes) */}
+            {/* Botón Google (Azure EasyAuth con callback al microservicio) */}
             <a
-              href="/.auth/login/google?post_login_redirect_uri=/dashboard/speakers"
-              className={`w-full sm:w-auto flex-1 h-16 rounded-full flex justify-center items-center transition-colors ring-4 ring-offset-2 
+              href="/.auth/login/google?post_login_redirect_uri=/auth/callback"
+              className={`w-full sm:w-auto flex-1 h-16 rounded-full flex justify-center items-center transition-colors ring-4 ring-offset-2
                 ${
                   isDark
                     ? "bg-white hover:bg-gray-200 ring-offset-transparent ring-[#3498db]"

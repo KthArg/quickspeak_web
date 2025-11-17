@@ -38,7 +38,7 @@ export async function POST(
 
     const finalWord = wordFromClient || wordFromCore;
 
-    // 2) userId desde JWT del cliente 
+    // 2) userId desde JWT del cliente
     const userId = resolveUserIdFromRequest(request) || '123';
 
     // 3) Azure Service Bus

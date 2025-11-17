@@ -24,7 +24,7 @@ function getUserIdFromAuth(req: NextRequest): string {
 // =========================
 export async function GET() {
   try {
-    const data = await apiClient.get('/dictionary/words');
+    const data = await apiClient.get('/conversation/dictionary/words');
     return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

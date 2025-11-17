@@ -6,10 +6,15 @@ import { useTheme } from "../contexts/ThemeContext";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { RiVoiceprintFill } from "react-icons/ri";
-import { apiClient } from "@/app/lib/api";
+import { apiClient, tokenManager } from "@/app/lib/api";
 
 type SignUpResponse = {
-  ok: boolean;
+  ok?: boolean;
+  token?: string;
+  userId?: number;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
   user?: { id: number; email: string };
   next?: string;
   message?: string;
@@ -58,16 +63,26 @@ const SignUpPage: NextPage = () => {
     try {
       setSubmitting(true);
 
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: formData.email,
-          password: formData.password
+          password: formData.password,
+          firstName: formData.email.split('@')[0], // Temporal - derivado del email
+          lastName: "User" // Temporal - valor por defecto
         })
       });
-      const data = await response.json();
-      if (data.ok) {
+      const data: SignUpResponse = await response.json();
+
+      console.log("Signup response:", data);
+
+      // Guardar token y userId si el registro fue exitoso
+      if (data.token) {
+        tokenManager.saveToken(data.token, data.userId);
+        window.location.href = data.next || "/pick_native_language";
+      } else if (data.ok) {
+        // Fallback para respuesta antigua sin token
         window.location.href = data.next || "/pick_native_language";
       } else {
         setServerError(data.message || "Unexpected error");
@@ -279,11 +294,11 @@ const SignUpPage: NextPage = () => {
             />
           </div>
 
-          {/* Si quieres simular OAuth real, podemos mockear también una ruta de callback en APIM */}
+          {/* Botón Google OAuth (Azure EasyAuth con callback al microservicio) */}
           <div className="w-full flex flex-col sm:flex-row justify-center items-center gap-4">
             <a
-              href="/.auth/login/google?post_login_redirect_uri=/pick_native_language"
-              className={`w-full sm:w-auto flex-1 h-16 rounded-full flex justify-center items-center transition-colors ring-4 ring-offset-2 
+              href="/.auth/login/google?post_login_redirect_uri=/auth/callback"
+              className={`w-full sm:w-auto flex-1 h-16 rounded-full flex justify-center items-center transition-colors ring-4 ring-offset-2
                 ${
                   isDark
                     ? "bg-white hover:bg-gray-200 ring-offset-transparent ring-[#3498db]"
