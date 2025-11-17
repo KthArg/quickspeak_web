@@ -78,14 +78,20 @@ const ProfilePage: NextPage = () => {
         return;
       }
 
-      // Actualizar perfil - necesitamos incluir password aunque no lo cambiemos
-      // El backend requiere todos los campos
+      // Actualizar nombre y apellido
       await apiClient.put("/user", {
-        email,
+        email: profile?.email, // Keep original email
         firstName,
         lastName,
-        password: profile?.email === email ? "unchanged_placeholder_123" : newPassword || "unchanged_placeholder_123"
+        password: "unchanged_placeholder_123" // Backend ignores this
       });
+
+      // Si el email cambió, usar el endpoint dedicado
+      if (email !== profile?.email) {
+        await apiClient.patch("/user/email", {
+          newEmail: email
+        });
+      }
 
       // Actualizar estado local
       if (profile) {
@@ -122,12 +128,10 @@ const ProfilePage: NextPage = () => {
         return;
       }
 
-      // Actualizar contraseña
-      await apiClient.put("/user", {
-        email: profile?.email,
-        firstName: profile?.firstName,
-        lastName: profile?.lastName,
-        password: newPassword
+      // Usar el endpoint dedicado para cambio de contraseña
+      await apiClient.patch("/user/password", {
+        currentPassword,
+        newPassword
       });
 
       // Limpiar campos

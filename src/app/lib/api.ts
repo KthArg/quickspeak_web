@@ -171,6 +171,16 @@ function mapEndpoint(endpoint: string): string {
       return `/users/api/v1/users/${userId}/languages/${languageId}`;
     }
 
+    // /user/password → /users/api/v1/users/{userId}/password
+    if (endpoint === "/user/password") {
+      return `/users/api/v1/users/${userId}/password`;
+    }
+
+    // /user/email → /users/api/v1/users/{userId}/email
+    if (endpoint === "/user/email") {
+      return `/users/api/v1/users/${userId}/email`;
+    }
+
     // /user/profile/basic → /users/api/v1/users/{userId}
     if (endpoint === "/user/profile/basic") {
       return `/users/api/v1/users/${userId}`;

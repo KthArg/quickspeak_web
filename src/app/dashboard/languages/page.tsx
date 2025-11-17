@@ -198,15 +198,17 @@ const LanguageModal = ({
 
         <button
           onClick={remove}
-          disabled={loading !== null}
+          disabled={loading !== null || isNative}
           className={`w-full rounded-full py-2 font-bold text-lg transition-colors
             ${
-              theme === "dark"
+              isNative
+                ? "bg-transparent border-2 border-gray-500 text-gray-500 cursor-not-allowed opacity-50"
+                : theme === "dark"
                 ? "bg-transparent border-2 border-red-500 text-red-500 hover:bg-red-500/10"
                 : "bg-white border-2 border-red-500 text-red-500 hover:bg-red-500/5"
             }`}
         >
-          {loading === "remove" ? "Removing…" : "Remove from Languages"}
+          {isNative ? "Cannot Remove Native Language" : loading === "remove" ? "Removing…" : "Remove from Languages"}
         </button>
       </div>
     </div>
@@ -278,13 +280,14 @@ const LanguagesPage: NextPage = () => {
 
   const handleRemoveLanguage = useCallback(async (id: number) => {
     try {
+      // Prevenir remover el idioma nativo
+      if (id === nativeLanguageId) {
+        showToast("Cannot remove native language. Please set another language as native first.", "error");
+        return;
+      }
+
       await apiClient.delete(`/user/languages/${id}`);
       setLanguages((prev) => prev.filter((l) => l.id !== id));
-
-      // Si el idioma removido era el nativo, limpiar el nativeLanguageId
-      if (id === nativeLanguageId) {
-        setNativeLanguageId(null);
-      }
 
       setSelectedLanguage(null);
       showToast("Language removed successfully!", "success");
