@@ -230,23 +230,28 @@ const LanguagesPage: NextPage = () => {
         setLoading(true);
         setError(null);
 
-        // Obtener idiomas en aprendizaje y el idioma nativo
-        const [learningLanguages, nativeLanguageData] = await Promise.all([
-          apiClient.get<any>("/user/languages/learning"),
-          apiClient.get<any>("/user/languages/native").catch(() => null)
-        ]);
+        // Obtener todos los idiomas del usuario (incluyendo nativos y de aprendizaje)
+        const userLanguagesData = await apiClient.get<any>("/user/languages");
 
-        console.log("Learning languages response:", learningLanguages);
-        console.log("Native language response:", nativeLanguageData);
+        console.log("User languages response:", userLanguagesData);
 
         // Manejar diferentes formatos de respuesta
-        const languagesArray = Array.isArray(learningLanguages)
-          ? learningLanguages
-          : (learningLanguages?.languages || []);
+        const userLanguagesArray = Array.isArray(userLanguagesData)
+          ? userLanguagesData
+          : (userLanguagesData?.languages || []);
 
-        const nativeId = nativeLanguageData?.languageId ?? null;
+        // Mapear los datos para extraer la información del idioma y encontrar el nativo
+        const mappedLanguages = userLanguagesArray.map((item: any) => ({
+          id: item.language?.id || item.id,
+          name: item.language?.name || item.name,
+          flagUrl: item.language?.flagUrl || item.flagUrl
+        }));
 
-        setLanguages(languagesArray);
+        // Encontrar el idioma nativo
+        const nativeLanguage = userLanguagesArray.find((item: any) => item.isNative === true);
+        const nativeId = nativeLanguage?.language?.id ?? null;
+
+        setLanguages(mappedLanguages);
         setNativeLanguageId(nativeId);
       } catch (e: any) {
         console.error("Error loading languages:", e);
@@ -260,28 +265,24 @@ const LanguagesPage: NextPage = () => {
   }, []);
 
   const handleMakeNative = useCallback(async (id: number) => {
-    const response = await fetch("/api/languages/make-native", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    const data = await response.json();
-    if (data.success) {
-      setNativeLanguageId(data.nativeLanguageId);
+    try {
+      await apiClient.patch(`/user/languages/${id}/make-native`, {});
+      setNativeLanguageId(id);
       setSelectedLanguage(null);
+    } catch (e: any) {
+      console.error("Error setting native language:", e);
+      alert(e?.message || "Error setting native language");
     }
   }, []);
 
   const handleRemoveLanguage = useCallback(async (id: number) => {
-    const response = await fetch("/api/languages/remove", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    const data = await response.json();
-    if (data.success) {
+    try {
+      await apiClient.delete(`/user/languages/${id}`);
       setLanguages((prev) => prev.filter((l) => l.id !== id));
       setSelectedLanguage(null);
+    } catch (e: any) {
+      console.error("Error removing language:", e);
+      alert(e?.message || "Error removing language");
     }
   }, []);
 
