@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useTheme } from "@/app/contexts/ThemeContext";
 import { Languages, X } from "lucide-react";
 import { apiClient } from "@/app/lib/api";
+import { useToast, ToastContainer } from "@/app/components/Toast";
 
 type Language = {
   id: number;
@@ -195,20 +196,18 @@ const LanguageModal = ({
           </p>
         </div>
 
-        {!isNative && (
-          <button
-            onClick={remove}
-            disabled={loading !== null}
-            className={`w-full rounded-full py-2 font-bold text-lg transition-colors
-              ${
-                theme === "dark"
-                  ? "bg-transparent border-2 border-red-500 text-red-500 hover:bg-red-500/10"
-                  : "bg-white border-2 border-red-500 text-red-500 hover:bg-red-500/5"
-              }`}
-          >
-            {loading === "remove" ? "Removing…" : "Remove from Languages"}
-          </button>
-        )}
+        <button
+          onClick={remove}
+          disabled={loading !== null}
+          className={`w-full rounded-full py-2 font-bold text-lg transition-colors
+            ${
+              theme === "dark"
+                ? "bg-transparent border-2 border-red-500 text-red-500 hover:bg-red-500/10"
+                : "bg-white border-2 border-red-500 text-red-500 hover:bg-red-500/5"
+            }`}
+        >
+          {loading === "remove" ? "Removing…" : "Remove from Languages"}
+        </button>
       </div>
     </div>
   );
@@ -216,6 +215,7 @@ const LanguageModal = ({
 
 const LanguagesPage: NextPage = () => {
   const { theme } = useTheme();
+  const { toasts, showToast, removeToast } = useToast();
   const [languages, setLanguages] = useState<Language[]>([]);
   const [nativeLanguageId, setNativeLanguageId] = useState<number | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(
@@ -269,22 +269,30 @@ const LanguagesPage: NextPage = () => {
       await apiClient.patch(`/user/languages/${id}/make-native`, {});
       setNativeLanguageId(id);
       setSelectedLanguage(null);
+      showToast("Native language updated successfully!", "success");
     } catch (e: any) {
       console.error("Error setting native language:", e);
-      alert(e?.message || "Error setting native language");
+      showToast(e?.message || "Error setting native language", "error");
     }
-  }, []);
+  }, [showToast]);
 
   const handleRemoveLanguage = useCallback(async (id: number) => {
     try {
       await apiClient.delete(`/user/languages/${id}`);
       setLanguages((prev) => prev.filter((l) => l.id !== id));
+
+      // Si el idioma removido era el nativo, limpiar el nativeLanguageId
+      if (id === nativeLanguageId) {
+        setNativeLanguageId(null);
+      }
+
       setSelectedLanguage(null);
+      showToast("Language removed successfully!", "success");
     } catch (e: any) {
       console.error("Error removing language:", e);
-      alert(e?.message || "Error removing language");
+      showToast(e?.message || "Error removing language", "error");
     }
-  }, []);
+  }, [nativeLanguageId, showToast]);
 
   if (loading) return <div className="p-8 text-center">Cargando idiomas…</div>;
   if (error)
@@ -335,7 +343,7 @@ const LanguagesPage: NextPage = () => {
         <AddLanguageCard />
       </footer>
 
-      {selectedLanguage && nativeLanguageId !== null && (
+      {selectedLanguage && (
         <LanguageModal
           lang={selectedLanguage}
           isNative={selectedLanguage.id === nativeLanguageId}
@@ -344,6 +352,8 @@ const LanguagesPage: NextPage = () => {
           onClose={() => setSelectedLanguage(null)}
         />
       )}
+
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useTheme } from "@/app/contexts/ThemeContext";
 import { Languages, X } from "lucide-react";
 import { apiClient } from "@/app/lib/api";
+import { useToast, ToastContainer } from "@/app/components/Toast";
 
 // --- Tipos ---
 type Language = {
@@ -138,6 +139,7 @@ const ConfirmationModal = ({
 
 const AddLanguagePage: NextPage = () => {
   const { theme } = useTheme();
+  const { toasts, showToast, removeToast } = useToast();
 
   // Estados que vienen de la API
   const [availableLanguages, setAvailableLanguages] = useState<Language[]>([]);
@@ -203,12 +205,12 @@ const AddLanguagePage: NextPage = () => {
         prev.includes(lang.name) ? prev : [...prev, lang.name]
       );
       setSelectedLanguage(null);
-      alert(`${lang.name} has been added to your list!`);
+      showToast(`${lang.name} has been added to your list!`, "success");
     } catch (e: any) {
       console.error("Error agregando idioma", e);
-      alert(e?.message || "There was an error adding the language.");
+      showToast(e?.message || "There was an error adding the language.", "error");
     }
-  }, []);
+  }, [showToast]);
 
   const handleIconClick = (lang: Language) => {
     if (!userLanguages.includes(lang.name)) {
@@ -260,6 +262,8 @@ const AddLanguagePage: NextPage = () => {
           onClose={() => setSelectedLanguage(null)}
         />
       )}
+
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };

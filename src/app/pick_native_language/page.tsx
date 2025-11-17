@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useTheme } from "../contexts/ThemeContext";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { apiClient } from "@/app/lib/api";
+import { useToast, ToastContainer } from "@/app/components/Toast";
 
 type Language = { id: number; name: string; flagUrl: string };
 
@@ -16,6 +17,7 @@ const animationStyles = `
 
 const PickNativeLanguagePage: NextPage = () => {
   const { theme } = useTheme();
+  const { toasts, showToast, removeToast } = useToast();
 
   const [languages, setLanguages] = useState<Language[]>([]);
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(
@@ -81,8 +83,7 @@ const PickNativeLanguagePage: NextPage = () => {
       // Redirigir a selección de idiomas para aprender
       window.location.href = "/pick_starting_languages";
     } catch (e: any) {
-      alert(e?.message || "No se pudo guardar el idioma.");
-    } finally {
+      showToast(e?.message || "No se pudo guardar el idioma.", "error");
       setSaving(false);
     }
   };
@@ -205,6 +206,8 @@ const PickNativeLanguagePage: NextPage = () => {
           </>
         )}
       </main>
+
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };
