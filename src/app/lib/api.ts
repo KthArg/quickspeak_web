@@ -138,6 +138,9 @@ function mapEndpoint(endpoint: string): string {
   if (endpoint === "/user/languages/catalog" || endpoint === "/user/languages/full-catalog") {
     return "/users/api/v1/languages";
   }
+  if (endpoint === "/languages/select-native") {
+    return "/users/api/v1/languages/select-native";
+  }
 
   // Mapeo de rutas que requieren userId
   if (userId) {
