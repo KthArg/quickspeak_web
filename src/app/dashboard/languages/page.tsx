@@ -229,21 +229,22 @@ const LanguagesPage: NextPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch("/api/languages/catalog");
 
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
+        // Obtener idiomas en aprendizaje y el idioma nativo
+        const [learningLanguages, nativeLanguageData] = await Promise.all([
+          apiClient.get<any>("/user/languages/learning"),
+          apiClient.get<any>("/user/languages/native").catch(() => null)
+        ]);
 
-        const data = await response.json();
-        console.log("Languages catalog response:", data);
+        console.log("Learning languages response:", learningLanguages);
+        console.log("Native language response:", nativeLanguageData);
 
         // Manejar diferentes formatos de respuesta
-        const languagesArray = Array.isArray(data)
-          ? data
-          : (data?.languages || []);
+        const languagesArray = Array.isArray(learningLanguages)
+          ? learningLanguages
+          : (learningLanguages?.languages || []);
 
-        const nativeId = data?.nativeLanguageId ?? null;
+        const nativeId = nativeLanguageData?.languageId ?? null;
 
         setLanguages(languagesArray);
         setNativeLanguageId(nativeId);

@@ -150,17 +150,44 @@ const AddLanguagePage: NextPage = () => {
     (async () => {
       try {
         const catalogResponse = await fetch("/api/languages/full-catalog");
+
+        if (!catalogResponse.ok) {
+          throw new Error(`Error ${catalogResponse.status}: ${catalogResponse.statusText}`);
+        }
+
         const catalog = await catalogResponse.json();
-        setAvailableLanguages(catalog.languages);
-      } catch (e) {
+        console.log("Full catalog response:", catalog);
+
+        // Manejar diferentes formatos de respuesta
+        const languagesArray = Array.isArray(catalog)
+          ? catalog
+          : (catalog?.languages || []);
+
+        setAvailableLanguages(languagesArray);
+      } catch (e: any) {
         console.error("Error cargando catálogo de idiomas", e);
+        setAvailableLanguages([]);
       }
+
       try {
         const meResponse = await fetch("/api/user/languages");
+
+        if (!meResponse.ok) {
+          throw new Error(`Error ${meResponse.status}: ${meResponse.statusText}`);
+        }
+
         const me = await meResponse.json();
-        setUserLanguages(me.userLanguages);
-      } catch (e) {
+        console.log("User languages response:", me);
+
+        // Manejar diferentes formatos de respuesta
+        const userLangsArray = Array.isArray(me)
+          ? me.map((lang: any) => lang.name)
+          : (me?.userLanguages || []);
+
+        setUserLanguages(userLangsArray);
+      } catch (e: any) {
         console.error("Error cargando idiomas del usuario", e);
+        setUserLanguages([]);
       }
     })();
   }, []);
@@ -207,14 +234,23 @@ const AddLanguagePage: NextPage = () => {
 
       <main className="w-full max-w-4xl flex-grow">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-10">
-          {availableLanguages.map((lang) => (
-            <LanguageIcon
-              key={lang.id}
-              lang={lang}
-              isAdded={userLanguages.includes(lang.name)}
-              onClick={() => handleIconClick(lang)}
-            />
-          ))}
+          {availableLanguages && availableLanguages.length > 0 ? (
+            availableLanguages.map((lang) => (
+              <LanguageIcon
+                key={lang.id}
+                lang={lang}
+                isAdded={userLanguages.includes(lang.name)}
+                onClick={() => handleIconClick(lang)}
+              />
+            ))
+          ) : (
+            <div className={`col-span-full text-center py-12 ${
+              theme === "dark" ? "text-gray-400" : "text-gray-600"
+            }`}>
+              <p className="text-xl mb-4">Loading languages...</p>
+              <p className="text-sm">Please wait while we fetch available languages</p>
+            </div>
+          )}
         </div>
       </main>
 

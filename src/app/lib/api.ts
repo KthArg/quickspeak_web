@@ -144,6 +144,16 @@ function mapEndpoint(endpoint: string): string {
 
   // Mapeo de rutas que requieren userId
   if (userId) {
+    // /user/languages/learning → /users/api/v1/users/{userId}/languages/learning
+    if (endpoint === "/user/languages/learning") {
+      return `/users/api/v1/users/${userId}/languages/learning`;
+    }
+
+    // /user/languages/native → /users/api/v1/users/{userId}/languages/native
+    if (endpoint === "/user/languages/native") {
+      return `/users/api/v1/users/${userId}/languages/native`;
+    }
+
     // /user/languages → /users/api/v1/users/{userId}/languages
     if (endpoint === "/user/languages") {
       return `/users/api/v1/users/${userId}/languages`;
