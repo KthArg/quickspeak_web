@@ -1,10 +1,10 @@
+// src/app/dashboard/dictionary/page.tsx
 "use client";
 
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import type { NextPage } from "next";
 import { useTheme } from "@/app/contexts/ThemeContext";
 import { MessageSquare, Bookmark } from "lucide-react";
-import { apiClient } from "@/app/lib/api";
 
 // -------------------- Tipos de API (DTO) --------------------
 type ColorToken =
@@ -13,7 +13,7 @@ type ColorToken =
   | "yellow"
   | "orange"
   | "blue"
-  | "green"
+  | "green" 
   | "red"
   | "purple"
   | "sky"
@@ -41,7 +41,6 @@ type WordUI = {
   translations: TranslationUI[];
 };
 
-// -------------------- Map ColorToken -> Tailwind --------------------
 const colorBg: Record<ColorToken, string> = {
   teal: "bg-[#06d6a0]",
   pink: "bg-[#ef476f]",
@@ -57,7 +56,7 @@ const colorBg: Record<ColorToken, string> = {
   rose: "bg-rose-500",
 };
 
-// -------------------- Subcomponentes --------------------
+// -------------------- SUBCOMPONENTES --------------------
 const WordTag = ({
   word,
   onClick,
@@ -203,7 +202,7 @@ const WordDetailModal = ({
   );
 };
 
-// -------------------- Página --------------------
+// -------------------- PAGINA --------------------
 const DictionaryDetailPage: NextPage = () => {
   const { theme } = useTheme();
 
@@ -217,13 +216,15 @@ const DictionaryDetailPage: NextPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [forgettingId, setForgettingId] = useState<number | null>(null);
 
-  // Cargar desde API (mock)
+  // Cargar desde API
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const response = await fetch('/api/dictionary/words');
-        const { words } = await response.json();
+        const res = await fetch("/api/dictionary/words", {
+          headers: { "Content-Type": "application/json" },
+        });
+        const { words } = (await res.json()) as WordsResponse;
         if (!alive) return;
 
         const toUI = (w: WordDTO): WordUI => ({
@@ -257,11 +258,20 @@ const DictionaryDetailPage: NextPage = () => {
 
   const handleUpdateAll = useCallback(async () => {
     try {
-      await fetch('/api/dictionary/words/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ all: true })
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("access_token")
+          : null;
+
+      await fetch("/api/dictionary/words/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ all: true }),
       });
+
       setDictionaryWords((prev) =>
         prev.map((w) => ({ ...w, translated: true }))
       );
@@ -274,25 +284,53 @@ const DictionaryDetailPage: NextPage = () => {
     }
   }, [selectedWord]);
 
-  const handleForget = useCallback(async (id: number) => {
-    try {
-      setForgettingId(id);
-        await fetch(`/api/dictionary/words/${id}/forget`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
-      });
-      // Quitar la palabra de la lista
-      setDictionaryWords((prev) => prev.filter((w) => w.id !== id));
-      // Cerrar modal si es la seleccionada
-      setSelectedWord((prev) => (prev?.id === id ? null : prev));
-    } catch (e) {
-      console.error("Error forgetting word:", e);
-      alert("No se pudo olvidar la palabra.");
-    } finally {
-      setForgettingId(null);
-    }
-  }, []);
+    const handleForget = useCallback(
+    async (id: number) => {
+      try {
+        setForgettingId(id);
+
+        const token =
+          typeof window !== "undefined"
+            ? localStorage.getItem("access_token")
+            : null;
+
+        // Buscar la palabra en el estado actual
+        const wordObj = dictionaryWords.find((w) => w.id === id);
+        const wordText = wordObj?.word;
+
+        const res = await fetch(`/api/dictionary/words/${id}/forget`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          // Mandar la palabra al BFF si la tenemos
+          body: JSON.stringify(
+            wordText
+              ? { word: wordText }
+              : {}
+          ),
+        });
+
+        if (!res.ok) {
+          const msg = await res.text().catch(() => "");
+          throw new Error(`Forget failed: ${res.status} ${msg}`);
+        }
+
+        // Quitar la palabra de la lista
+        setDictionaryWords((prev) => prev.filter((w) => w.id !== id));
+
+        // Cerrar modal si era la seleccionada
+        setSelectedWord((prev) => (prev?.id === id ? null : prev));
+      } catch (e) {
+        console.error("Error forgetting word:", e);
+        alert("No se pudo olvidar la palabra.");
+      } finally {
+        setForgettingId(null);
+      }
+    },
+    [dictionaryWords] 
+  );
 
   const toggleFilter = (filter: string) => {
     setActiveFilters((prev) =>

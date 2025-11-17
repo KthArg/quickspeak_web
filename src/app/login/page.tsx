@@ -8,19 +8,21 @@ import { FcGoogle } from "react-icons/fc";
 import { RiVoiceprintFill } from "react-icons/ri";
 import { apiClient } from "@/app/lib/api";
 
+// El login puede devolver éxito o error
 type LoginResponse =
   | {
       success: true;
-      user: { email: string; name: string };
+      user?: { email: string; name?: string; id?: string | number; userId?: string };
       token: string;
-      expiresIn: number;
+      expiresIn?: number;
+      userId?: string; // por si tu backend lo manda así
     }
   | {
       success: false;
       message: string;
     };
 
-const SignUpPage: NextPage = () => {
+const LoginPage: NextPage = () => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
@@ -34,12 +36,14 @@ const SignUpPage: NextPage = () => {
   const [serverError, setServerError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
+  // cuando escribe limpia errores
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((p) => ({ ...p, [name]: value }));
     setServerError(""); // limpia error de servidor al tipear
   };
 
+  // validación básica
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
     if (!formData.email) newErrors.email = "Email is required";
@@ -52,6 +56,7 @@ const SignUpPage: NextPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // submit del form
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setServerError("");
@@ -60,25 +65,48 @@ const SignUpPage: NextPage = () => {
     try {
       setLoading(true);
 
-      // Llamada al mock
-      const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: formData.email,
-        password: formData.password
-      })
-    });
-    const resp = await response.json();
+      // 👇 AQUÍ llamas a tu API del Next (la ruta que ya tienes: /api/auth/login)
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
+      const resp: LoginResponse = await response.json();
       console.log("Login response:", resp);
 
+      // si la API de login te devolvió éxito
       if ("success" in resp && resp.success) {
-        // Despues cuando nos toque hacer el backend, podemos guardar en este punto el token
-        // localStorage.setItem("token", resp.token);
+        // 1) guardar token para WS y para fetch
+        if (typeof window !== "undefined" && resp.token) {
+          localStorage.setItem("access_token", resp.token);
+        }
+
+        // 2) intentar extraer el userId de todas las formas posibles
+        let userId: string | null = null;
+        // a) si vino directo
+        if ("userId" in resp && resp.userId) {
+          userId = resp.userId;
+        }
+        // b) si vino dentro de user
+        else if (resp.user && (resp.user as any).id) {
+          userId = String((resp.user as any).id);
+        } else if (resp.user && (resp.user as any).userId) {
+          userId = String((resp.user as any).userId);
+        }
+
+        // 3) si logramos obtener el userId lo guardamos
+        if (typeof window !== "undefined" && userId) {
+          localStorage.setItem("user_id", userId);
+        }
+
+        // 4) redirigir igual que antes
         window.location.href = "/dashboard/speakers";
       } else {
-        // Cuando el mock manda success:false (p.ej. 400, 401 ya son interceptados por apiClient y vienen como throw)
+        // cuando el mock manda success:false
         setServerError(resp.message || "Login failed.");
       }
     } catch (err: any) {
@@ -295,4 +323,4 @@ const SignUpPage: NextPage = () => {
   );
 };
 
-export default SignUpPage;
+export default LoginPage;
