@@ -1,6 +1,8 @@
 // src/app/lib/api.ts
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "https://apim-quick-speak.azure-api.net";
+  process.env.NEXT_PUBLIC_USER_SERVICE_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "https://user-service-quickspeak-dzaheeemekcpaqfg.chilecentral-01.azurewebsites.net";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
 // Claves para almacenar el token JWT y userId en localStorage
@@ -121,79 +123,83 @@ function buildHeaders(extra?: Record<string, string>) {
 }
 
 /**
- * Mapea las rutas del frontend al formato del backend de usuarios a través de APIM
+ * Mapea las rutas del frontend al formato del backend
+ * Soporta conexión directa al backend o a través de APIM
  *
  * Ejemplos:
- * - /user/languages → /users/api/v1/users/{userId}/languages
- * - /user/languages/starting → /users/api/v1/languages/starting
- * - /user/profile/basic → /users/api/v1/users/{userId}/profile
+ * - Direct: /user/languages → /api/v1/users/{userId}/languages
+ * - APIM: /user/languages → /users/api/v1/users/{userId}/languages
  */
 function mapEndpoint(endpoint: string): string {
   const userId = tokenManager.getUserId();
 
+  // Detectar si estamos usando APIM (URL contiene "apim")
+  const useAPIM = API_BASE_URL.includes("apim");
+  const prefix = useAPIM ? "/users" : "";
+
   // Mapeo de rutas públicas de languages (no requieren userId)
   if (endpoint === "/user/languages/starting") {
-    return "/users/api/v1/languages/starting";
+    return `${prefix}/api/v1/languages/starting`;
   }
   if (endpoint === "/user/languages/catalog" || endpoint === "/user/languages/full-catalog") {
-    return "/users/api/v1/languages";
+    return `${prefix}/api/v1/languages`;
   }
   if (endpoint === "/languages/select-native") {
-    return "/users/api/v1/languages/select-native";
+    return `${prefix}/api/v1/languages/select-native`;
   }
 
   // Mapeo de rutas que requieren userId
   if (userId) {
-    // /user/languages/learning → /users/api/v1/users/{userId}/languages/learning
+    // /user/languages/learning → /api/v1/users/{userId}/languages/learning
     if (endpoint === "/user/languages/learning") {
-      return `/users/api/v1/users/${userId}/languages/learning`;
+      return `${prefix}/api/v1/users/${userId}/languages/learning`;
     }
 
-    // /user/languages/native → /users/api/v1/users/{userId}/languages/native
+    // /user/languages/native → /api/v1/users/{userId}/languages/native
     if (endpoint === "/user/languages/native") {
-      return `/users/api/v1/users/${userId}/languages/native`;
+      return `${prefix}/api/v1/users/${userId}/languages/native`;
     }
 
-    // /user/languages → /users/api/v1/users/{userId}/languages
+    // /user/languages → /api/v1/users/{userId}/languages
     if (endpoint === "/user/languages") {
-      return `/users/api/v1/users/${userId}/languages`;
+      return `${prefix}/api/v1/users/${userId}/languages`;
     }
 
-    // /user/languages/{languageId}/make-native → /users/api/v1/users/{userId}/languages/{languageId}/native
+    // /user/languages/{languageId}/make-native → /api/v1/users/{userId}/languages/{languageId}/native
     if (endpoint.match(/^\/user\/languages\/(\d+)\/make-native$/)) {
       const languageId = endpoint.match(/\/user\/languages\/(\d+)\/make-native$/)?.[1];
-      return `/users/api/v1/users/${userId}/languages/${languageId}/native`;
+      return `${prefix}/api/v1/users/${userId}/languages/${languageId}/native`;
     }
 
-    // /user/languages/{languageId} → /users/api/v1/users/{userId}/languages/{languageId}
+    // /user/languages/{languageId} → /api/v1/users/{userId}/languages/{languageId}
     if (endpoint.match(/^\/user\/languages\/\d+$/)) {
       const languageId = endpoint.match(/\/user\/languages\/(\d+)$/)?.[1];
-      return `/users/api/v1/users/${userId}/languages/${languageId}`;
+      return `${prefix}/api/v1/users/${userId}/languages/${languageId}`;
     }
 
-    // /user/password → /users/api/v1/users/{userId}/password
+    // /user/password → /api/v1/users/{userId}/password
     if (endpoint === "/user/password") {
-      return `/users/api/v1/users/${userId}/password`;
+      return `${prefix}/api/v1/users/${userId}/password`;
     }
 
-    // /user/email → /users/api/v1/users/{userId}/email
+    // /user/email → /api/v1/users/{userId}/email
     if (endpoint === "/user/email") {
-      return `/users/api/v1/users/${userId}/email`;
+      return `${prefix}/api/v1/users/${userId}/email`;
     }
 
-    // /user/profile/basic → /users/api/v1/users/{userId}
+    // /user/profile/basic → /api/v1/users/{userId}
     if (endpoint === "/user/profile/basic") {
-      return `/users/api/v1/users/${userId}`;
+      return `${prefix}/api/v1/users/${userId}`;
     }
 
-    // /user/profile → /users/api/v1/users/{userId}/profile
+    // /user/profile → /api/v1/users/{userId}/profile
     if (endpoint === "/user/profile") {
-      return `/users/api/v1/users/${userId}/profile`;
+      return `${prefix}/api/v1/users/${userId}/profile`;
     }
 
-    // /user → /users/api/v1/users/{userId}
+    // /user → /api/v1/users/{userId}
     if (endpoint === "/user") {
-      return `/users/api/v1/users/${userId}`;
+      return `${prefix}/api/v1/users/${userId}`;
     }
   }
 
