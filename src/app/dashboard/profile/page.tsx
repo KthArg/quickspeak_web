@@ -12,6 +12,7 @@ type UserProfile = {
   email: string;
   firstName: string;
   lastName: string;
+  authProvider?: string; // LOCAL, GOOGLE, MICROSOFT, FACEBOOK
 };
 
 const ProfilePage: NextPage = () => {
@@ -39,6 +40,9 @@ const ProfilePage: NextPage = () => {
   // Estados para modo de edición
   const [editingProfile, setEditingProfile] = useState(false);
   const [editingPassword, setEditingPassword] = useState(false);
+
+  // Verificar si el usuario es OAuth (no puede cambiar email/password)
+  const isOAuthUser = profile?.authProvider && profile.authProvider !== "LOCAL";
 
   // Cargar perfil del usuario
   useEffect(() => {
@@ -86,8 +90,8 @@ const ProfilePage: NextPage = () => {
         password: "unchanged_placeholder_123" // Backend ignores this
       });
 
-      // Si el email cambió, usar el endpoint dedicado
-      if (email !== profile?.email) {
+      // Si el email cambió y no es usuario OAuth, usar el endpoint dedicado
+      if (email !== profile?.email && !isOAuthUser) {
         await apiClient.patch("/user/email", {
           newEmail: email
         });
@@ -219,15 +223,15 @@ const ProfilePage: NextPage = () => {
               <label className={`block text-sm font-semibold mb-2 ${
                 theme === "dark" ? "text-gray-300" : "text-gray-700"
               }`}>
-                Email
+                Email {isOAuthUser && <span className="text-xs text-orange-400">(Managed by {profile?.authProvider})</span>}
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={!editingProfile}
+                disabled={!editingProfile || isOAuthUser}
                 className={`w-full px-4 py-3 rounded-xl border-2 transition-all ${
-                  editingProfile
+                  editingProfile && !isOAuthUser
                     ? theme === "dark"
                       ? "bg-gray-700 border-cyan-400/50 text-white focus:border-cyan-400"
                       : "bg-white border-cyan-400 text-black focus:border-cyan-500"
@@ -236,6 +240,11 @@ const ProfilePage: NextPage = () => {
                     : "bg-gray-100 border-gray-300 text-gray-600 cursor-not-allowed"
                 } focus:outline-none`}
               />
+              {isOAuthUser && editingProfile && (
+                <p className="text-xs text-orange-400 mt-1">
+                  Email cannot be changed for {profile?.authProvider} accounts
+                </p>
+              )}
             </div>
 
             {/* First Name */}
@@ -331,19 +340,20 @@ const ProfilePage: NextPage = () => {
         </div>
 
         {/* Password Section */}
-        <div
-          className={`rounded-3xl p-6 md:p-8 shadow-xl ${
-            theme === "dark"
-              ? "bg-gray-800/50 border-2 border-cyan-400/30"
-              : "bg-white border-2 border-gray-200"
-          }`}
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <Lock className="w-6 h-6 text-cyan-400" />
-            <h2 className="text-2xl font-bold">Change Password</h2>
-          </div>
+        {!isOAuthUser && (
+          <div
+            className={`rounded-3xl p-6 md:p-8 shadow-xl ${
+              theme === "dark"
+                ? "bg-gray-800/50 border-2 border-cyan-400/30"
+                : "bg-white border-2 border-gray-200"
+            }`}
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <Lock className="w-6 h-6 text-cyan-400" />
+              <h2 className="text-2xl font-bold">Change Password</h2>
+            </div>
 
-          {editingPassword ? (
+            {editingPassword ? (
             <div className="space-y-4">
               {/* Current Password */}
               <div>
@@ -468,7 +478,28 @@ const ProfilePage: NextPage = () => {
               Change Password
             </button>
           )}
-        </div>
+          </div>
+        )}
+
+        {/* OAuth User Message */}
+        {isOAuthUser && (
+          <div
+            className={`rounded-3xl p-6 md:p-8 shadow-xl ${
+              theme === "dark"
+                ? "bg-gray-800/50 border-2 border-orange-400/30"
+                : "bg-white border-2 border-orange-200"
+            }`}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <Lock className="w-6 h-6 text-orange-400" />
+              <h2 className="text-2xl font-bold">Password Management</h2>
+            </div>
+            <p className={`${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+              Your account is managed by <span className="font-bold text-orange-400">{profile?.authProvider}</span>.
+              Password and email changes must be made through your {profile?.authProvider} account settings.
+            </p>
+          </div>
+        )}
       </div>
 
       <ToastContainer toasts={toasts} removeToast={removeToast} />
