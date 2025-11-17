@@ -168,18 +168,43 @@ const SpeakersPageV2: NextPage = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null);
+
         const [savedSpeakersRes, recentChatsRes] = await Promise.all([
           fetch('/api/speakers/saved'),
           fetch('/api/chats/recent')
         ]);
-        
+
+        if (!savedSpeakersRes.ok) {
+          throw new Error(`Error loading speakers: ${savedSpeakersRes.status}`);
+        }
+        if (!recentChatsRes.ok) {
+          throw new Error(`Error loading chats: ${recentChatsRes.status}`);
+        }
+
         const savedSpeakersResponse = await savedSpeakersRes.json();
         const recentChatsResponse = await recentChatsRes.json();
 
-        setSavedSpeakers(savedSpeakersResponse.savedSpeakers);
-        setRecentChats(recentChatsResponse.recentChats);
+        console.log("Saved speakers response:", savedSpeakersResponse);
+        console.log("Recent chats response:", recentChatsResponse);
+
+        // Manejar diferentes formatos de respuesta
+        const speakersArray = Array.isArray(savedSpeakersResponse)
+          ? savedSpeakersResponse
+          : (savedSpeakersResponse?.savedSpeakers || []);
+
+        const chatsArray = Array.isArray(recentChatsResponse)
+          ? recentChatsResponse
+          : (recentChatsResponse?.recentChats || []);
+
+        setSavedSpeakers(speakersArray);
+        setRecentChats(chatsArray);
       } catch (err: any) {
+        console.error("Error loading dashboard data:", err);
         setError(err.message || "Error loading data");
+        // Asegurar que los arrays estén inicializados incluso en error
+        setSavedSpeakers([]);
+        setRecentChats([]);
       } finally {
         setLoading(false);
       }
@@ -321,7 +346,8 @@ const SpeakersPageV2: NextPage = () => {
           </button>
           <div className="w-full overflow-x-auto pb-4 -mb-4">
             <div className="flex items-start gap-4 pt-2 w-max">
-              {savedSpeakers.map((speaker: SavedSpeaker) => {
+              {savedSpeakers && savedSpeakers.length > 0 ? (
+                savedSpeakers.map((speaker: SavedSpeaker) => {
                 const countryCode = flagEmojiToCountryCode(speaker.flagEmoji);
                 return (
                   <button
@@ -358,7 +384,14 @@ const SpeakersPageV2: NextPage = () => {
                     </span>
                   </button>
                 );
-              })}
+              })
+              ) : (
+                <div className={`flex items-center justify-center w-full py-8 ${
+                  theme === "dark" ? "text-gray-400" : "text-gray-600"
+                }`}>
+                  <p className="text-center">No saved speakers yet. Add one to get started!</p>
+                </div>
+              )}
               <div className="flex flex-col items-center gap-2 w-24 sm:w-28 flex-shrink-0">
                 <a
                   href="/dashboard/speakers_catalog"
@@ -394,7 +427,7 @@ const SpeakersPageV2: NextPage = () => {
             <RotateCw size={16} className="text-white/80" />
           </div>
 
-          {recentChats.length > 0 ? (
+          {recentChats && recentChats.length > 0 ? (
             <div className="w-full flex flex-col gap-3">
               {recentChats.map((chat: RecentChat) => (
                 <ChatListItem
